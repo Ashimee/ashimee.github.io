@@ -12,4 +12,3 @@ lnk.targetpath = "%appdata%\GDScratch\geometry-dash-scratch.exe"
 lnk.workingdirectory = "%appdata%\GDScratch" 
 lnk.save
 wsc.run("robocopy ./GDScratch.LNK "+StartMenu)
-wsc.run("del ./GDScratch.LNK")
