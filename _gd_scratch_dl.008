@@ -1,0 +1,22 @@
+If WScript.Arguments.Named.Exists("elevated") = False Then
+  'Launch the script again as administrator
+  CreateObject("Shell.Application").ShellExecute "wscript.exe", """" & WScript.ScriptFullName & """ /elevated", "", "runas", 1
+  WScript.Quit
+Else
+  'Change the working directory from the system32 folder back to the script's folder.
+  Set oShell = CreateObject("WScript.Shell")
+  oShell.CurrentDirectory = CreateObject("Scripting.FileSystemObject").GetParentFolderName(WScript.ScriptFullName)
+End If
+
+Set wsc = WScript.CreateObject("WScript.Shell")
+Desktop = wsc.SpecialFolders("Desktop")
+StartMenu = wsc.SpecialFolders("StartMenu")
+
+Set lnk = wsc.CreateShortcut("./GDScratch.LNK")
+
+lnk.targetpath = "%appdata%\GDScratch\geometry-dash-scratch.exe"
+lnk.workingdirectory = "%appdata%\GDScratch" 
+lnk.save
+
+wsc.run("robocopy ./GDScratch.LNK "+StartMenu)
+wsc.run("robocopy ./GDScratch.LNK "+Desktop)
