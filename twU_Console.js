@@ -219,11 +219,17 @@ TWunlocked.utils.UpdateButton.dontFixButton = false;
 TWunlocked.utils.UpdateButton.oldHref = document.location.href;
 TWunlocked.utils.UpdateButton.update = (function(){
   //console.log(`Checking button & href..\n\tDAT:\n\t${document.location.href}\t${TWunlocked.utils.UpdateButton.oldHref}\t`);
-  if (TWunlocked.utils.UpdateButton.dontFixButton) { TWunlocked.utils.UpdateButton.btnIvl = 'stopped'; return };
+  if (TWunlocked.utils.UpdateButton.dontFixButton) { 
+    clearInterval(TWunlocked.utils.UpdateButton.btnIvl);
+    TWunlocked.utils.UpdateButton.btnIvl = 'stopped';
+    TWunlocked.utils.UpdateButton = '';
+    delete TWunlocked.utils.UpdateButton;
+    return;
+  }
   if ((document.location.href!=TWunlocked.utils.UpdateButton.oldHref)||(document.getElementById('TWunlocked-NavBtn')==null)) {
     TWunlocked.openButton.addSelfToNav();
     return;
-  };
+  }
 });
 TWunlocked.utils.UpdateButton.btnIvl = setInterval(TWunlocked.utils.UpdateButton.update, 50);
 
