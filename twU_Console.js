@@ -220,6 +220,8 @@ TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optio
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
   </label><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
+  Submit an extension that cannot be on the gallery to: <a href="https://github.com/SurvExe1Pc/unsafe-extensions">HERE, Click me!!</a>
+  <hr>
 </div>`;
 TWunlocked.utils.optionsElm.id = 'TWunlocked-ModalDiv';
 document.body.appendChild(TWunlocked.utils.optionsElm);
