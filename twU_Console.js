@@ -62,7 +62,7 @@ if (window.TWUextensionPage == true) {
   return;
 }
 
-if (!(new RegExp('((http(s?)\:\/\/)?)((www\.)?)(turbowarp\.org)((\/)(editor)?)','gi').test(document.location.href))) { console.error('Not a valid page.'); return }
+if (!(new RegExp('((http(s?)\:\/\/)?)((www\.)?)(turbowarp\.org)((\/)(editor)?)','gi').test(document.location.href))) { console.error('TW-Unlocked | Not a valid page.'); return }
   
 window.TWunlocked = {};
 TWunlocked.utils = {};
@@ -270,4 +270,7 @@ TWunlocked.attemptRemovalOfUSMscript = (function(){
 //Add the modal.
 TWunlocked.openButton = TWunlocked.addMenuBtn('TW-Unlocked', (function(){TWunlocked.utils.optionsElm.showModal()}));
 TWunlocked.openButton.setID('TWunlocked-NavBtn');
+
+//Load extensions out of url
+TWunlocked.utils.loadUextsFromUrl();
 });ImportTWunlock(true,window.vm);
