@@ -61,6 +61,8 @@ if (window.TWUextensionPage == true) {
   }
   return;
 }
+
+if (!(new RegExp('((http(s?)\:\/\/)?)((www\.)?)(turbowarp\.org)((\/)(editor)?)','gi').test(document.location.href))) { console.error('Not a valid page.'); return }
   
 window.TWunlocked = {};
 TWunlocked.utils = {};
