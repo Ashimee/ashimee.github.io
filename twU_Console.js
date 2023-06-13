@@ -48,6 +48,20 @@ if (win.LoadedTWunlock != undefined) {
 
 win.LoadedTWunlock = true;
 
+if (window.TWUextensionPage == true) {
+  const gallery = document.getElementsByClassName('extension-buttons');
+  function TWuOverride(elm) {
+    var elmx = elm.children[1];
+    elmx.href = elmx.href.replace('?extension=','?twu-extension=');
+		elmx.style.display='';
+	};
+  for (let i = 0; i < gallery.length; i++) {
+    const elm  = gallery.item(i);
+    TWuOverride(elm);
+  }
+  return;
+}
+  
 window.TWunlocked = {};
 TWunlocked.utils = {};
 
@@ -151,6 +165,19 @@ vm.extensionManager.loadUnsandboxedExtension = (async function(url){
   return true;
 });
 TWunlocked.loadExtensionUnsandboxed = vm.extensionManager.loadUnsandboxedExtension;
+  
+TWunlocked.utils.loadUextsFromUrl = (function(){
+  function getParams(){var tmp2 = [];var tmp3 = 0;tmp.forEach((v,k)=>{tmp3+=1;if(tmp3==1){k=k.replace(document.location.href.split("?")[0]+'?','')};tmp2.push({key: k, value: v})});return( tmp2 )};
+  const params = getParams();
+  for (param in params) {
+    if (param.key == 'twu-extension') {
+      var ext_link = param.value;
+      if (vm.runtime.extensionManager._isValidExtensionURL(ext_link)) {
+        
+      } else console.error(`Extension url is invalid.\nURL: ${ext_link}`);
+    }
+  }
+});
 
 TWunlocked.disablePermissionSecurity = (async function(){
   vm.securityManager.canFetch = this.utils.aTf;
