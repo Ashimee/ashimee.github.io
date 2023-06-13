@@ -175,7 +175,7 @@ TWunlocked.utils.loadUextsFromUrl = (function(){
     if (param.key == 'twu-extension') {
       var ext_link = param.value;
       if (vm.runtime.extensionManager._isValidExtensionURL(ext_link)) {
-        this.loadExtensionUnsandboxed(ext_link);
+        TWunlocked.loadExtensionUnsandboxed(ext_link);
       } else console.error(`Extension url is invalid.\nURL: ${ext_link}`);
     }
   });
