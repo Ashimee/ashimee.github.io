@@ -169,8 +169,8 @@ vm.extensionManager.loadUnsandboxedExtension = (async function(url){
 TWunlocked.loadExtensionUnsandboxed = vm.extensionManager.loadUnsandboxedExtension;
   
 TWunlocked.utils.loadUextsFromUrl = (function(){
-  function getParams(){var tmp2 = [];var tmp3 = 0;tmp.forEach((v,k)=>{tmp3+=1;if(tmp3==1){k=k.replace(document.location.href.split("?")[0]+'?','')};tmp2.push({key: k, value: v})});return( tmp2 )};
-  const params = getParams();
+  function getParams(query){var tmp2 = [];var tmp3 = 0;query.forEach((v,k)=>{tmp3+=1;if(tmp3==1){k=k.replace(document.location.href.split("?")[0]+'?','')};tmp2.push({key: k, value: v})});return( tmp2 )};
+  const params = getParams(new URLSearchParams(document.location.href));
   for (param in params) {
     if (param.key == 'twu-extension') {
       var ext_link = param.value;
