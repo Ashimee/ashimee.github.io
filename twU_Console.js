@@ -171,14 +171,14 @@ TWunlocked.loadExtensionUnsandboxed = vm.extensionManager.loadUnsandboxedExtensi
 TWunlocked.utils.loadUextsFromUrl = (function(){
   function getParams(query){var tmp2 = [];var tmp3 = 0;query.forEach((v,k)=>{tmp3+=1;if(tmp3==1){k=k.replace(document.location.href.split("?")[0]+'?','')};tmp2.push({key: k, value: v})});return( tmp2 )};
   const params = getParams(new URLSearchParams(document.location.href));
-  for (param in params) {
+  params.forEach(function(param){
     if (param.key == 'twu-extension') {
       var ext_link = param.value;
       if (vm.runtime.extensionManager._isValidExtensionURL(ext_link)) {
         this.loadExtensionUnsandboxed(ext_link);
       } else console.error(`Extension url is invalid.\nURL: ${ext_link}`);
     }
-  }
+  });
 });
 
 TWunlocked.disablePermissionSecurity = (async function(){
