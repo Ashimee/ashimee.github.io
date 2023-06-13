@@ -63,8 +63,8 @@ if (window.TWUextensionPage == true) {
 }
 
 //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
-if (window.location.hostname == 'turbowarp.org') { console.error('TW-Unlocked | Not a valid page.'); return }
-  
+if (document.location.hostname != 'turbowarp.org') { console.error('TW-Unlocked | Not a valid page.'); return }
+
 window.TWunlocked = {};
 TWunlocked.utils = {};
 
