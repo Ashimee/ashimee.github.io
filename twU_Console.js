@@ -32,11 +32,10 @@ var win = window;
 console.log('Loaded TW-Unlocked.');
 if (deload) {
   delete win.LoadedTWunlock;
-  try {
-    document.getElementById('TWunlocked-ModalDiv').remove();
-    TWunlocked.attemptRemovalOfUSMscript();
-    TWunlocked.openButton.remove();
-   } catch {};
+  try { document.getElementById('TWunlocked-ModalDiv').remove(); } catch {};
+  try { TWunlocked.attemptRemovalOfUSMscript(); } catch {};
+  try { TWunlocked.openButton.remove(); } catch {};
+  try { TWunlocked.utils.loadUriExtBtn.remove() } catch {};
   TWunlocked = '';
   delete TWunlocked;
 }
@@ -169,17 +168,22 @@ vm.extensionManager.loadUnsandboxedExtension = (async function(url){
 });
 TWunlocked.loadExtensionUnsandboxed = vm.extensionManager.loadUnsandboxedExtension;
   
-TWunlocked.utils.loadUextsFromUrl = (function(){
+TWunlocked.utils.loadUextsFromUrl = (function(hasParam){
+  hasParam = hasParam || 0;
+  hasParam = (hasParam==0 ? false : hasParam);
   function getParams(query){var tmp2 = [];var tmp3 = 0;query.forEach((v,k)=>{tmp3+=1;if(tmp3==1){k=k.replace(document.location.href.split("?")[0]+'?','')};tmp2.push({key: k, value: v})});return( tmp2 )};
   const params = getParams(new URLSearchParams(document.location.href));
+  var foundParam = false;
   params.forEach(function(param){
     if (param.key == 'twu-extension') {
+      if (hasParam||foundParam) { foundParam=true; return(foundParam) };
       var ext_link = param.value;
       if (vm.runtime.extensionManager._isValidExtensionURL(ext_link)) {
         TWunlocked.loadExtensionUnsandboxed(ext_link);
       } else console.error(`Extension url is invalid.\nURL: ${ext_link}`);
     }
   });
+  if (hasParam) return(foundParam);
 });
 
 TWunlocked.disablePermissionSecurity = (async function(){
@@ -275,5 +279,7 @@ TWunlocked.openButton = TWunlocked.addMenuBtn('TW-Unlocked', (function(){TWunloc
 TWunlocked.openButton.setID('TWunlocked-NavBtn');
 
 //Load extensions out of url
-TWunlocked.utils.loadUextsFromUrl();
+if (TWunlocked.utils.loadUextsFromUrl(true)) {
+  TWunlocked.utils.loadUriExtBtn = TWunlocked.addMenuBtn('Load URL extensions', (function(){TWunlocked.utils.loadUextsFromUrl(false);TWunlocked.utils.loadUriExtBtn.remove()}));
+}
 });ImportTWunlock(true,window.vm);
