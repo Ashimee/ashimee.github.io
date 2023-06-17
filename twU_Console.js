@@ -195,8 +195,6 @@ TWunlocked.utils.getCacheParams = (function(url){
   _urlParams.append(localStorage.getItem(storageItem), '');
   //TIME
   _urlParams.append(TWunlocked.utils.dateStringNo(), '');
-  //RANDOM NUMBER
-  _urlParams.append(TWunlocked.utils.bigno(), TWunlocked.utils.bigno());
   //Returning the params
   return ('?'+_urlParams.toString()).replace(encodeURIComponent(url), '');
 });
