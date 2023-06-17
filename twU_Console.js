@@ -68,6 +68,27 @@ window.TWunlocked = {};
 TWunlocked.utils = {};
 
 //Utilities
+TWunlocked.utils.setCookie = function(cname, cvalue, exdays) {
+  const d = new Date();
+  d.setTime(d.getTime() + (exdays*24*60*60*1000));
+  let expires = "expires="+ d.toUTCString();
+  document.cookie = cname + "=" + cvalue + ";" + expires + ";path=/";
+}
+TWunlocked.utils.getCookie = function(cname) {
+  let name = cname + "=";
+  let decodedCookie = decodeURIComponent(document.cookie);
+  let ca = decodedCookie.split(';');
+  for(let i = 0; i <ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) == ' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0) {
+      return c.substring(name.length, c.length);
+    }
+  }
+  return "";
+}
 TWunlocked.utils.aTf = (async function(){ return( true ) });
 TWunlocked.utils.oSmPv = {
   cf: vm.securityManager.canFetch,
@@ -153,6 +174,16 @@ TWunlocked.getProjectData = async (projectId) => {
     const data = await response.arrayBuffer();
     return data;
 };
+TWunlocked.utils.getCacheParams = (function(url){
+  var _urlParams = new URLSearchParams(url);
+  _urlParams.append('bypassCache', '');
+  const storageItem = 'twUnlocked-cacheId';
+  if (localStorage.getItem(storageItem) == null) localStorage.setItem(storageItem, 1);
+  localStorage.setItem(storageItem, parseFloat(localStorage.getItem(storageItem))+1);
+  _urlParams.append(localStorage.getItem(storageItem), '');
+  return ('?'+_urlParams.toString()).replace(encodeURIComponent(url), '');
+});
+
 
 //Load Extensions Unsandboxed
 vm.extensionManager.loadUnsandboxedExtension = (async function(url){
@@ -166,7 +197,11 @@ vm.extensionManager.loadUnsandboxedExtension = (async function(url){
   vm.securityManager.getSandboxMode = oldSandbox; // Return the sandbox to normal.
   return true;
 });
-TWunlocked.loadExtensionUnsandboxed = vm.extensionManager.loadUnsandboxedExtension;
+TWunlocked.loadExtensionUnsandboxed = (async function(url, bypassCache){
+  bypassCache = new Boolean(bypassCache) || true;
+  const set = await vm.extensionManager.loadUnsandboxedExtension(url+(bypassCache?TWunlocked.utils.getCacheParams(url):''));
+  return set;
+});
   
 TWunlocked.utils.loadUextsFromUrl = (function(hasParam){
   hasParam = hasParam || 0;
