@@ -174,13 +174,30 @@ TWunlocked.getProjectData = async (projectId) => {
     const data = await response.arrayBuffer();
     return data;
 };
+TWunlocked.utils.dateStringNo = (function(){
+  return (new Date().toJSON().replace(/-|\.|t|z|:/gi,''));
+})
+TWunlocked.utils.random = {};
+TWunlocked.utils.random.float = function(min, max) {
+  return Math.random() * (max - min) + min;
+}
+TWunlocked.utils.random.int = (function(min, max){
+  return Math.round(TWunlocked.utils.random.float);
+})
+TWunlocked.utils.bigno = (function(){return(TWunlocked.utils.random.int(Number.MIN_SAFE_INTEGER, Number.MAX_SAFE_INTEGER))});
 TWunlocked.utils.getCacheParams = (function(url){
   var _urlParams = new URLSearchParams(url);
   _urlParams.append('bypassCache', '');
+  //COUNTER
   const storageItem = 'twUnlocked-cacheId';
   if (localStorage.getItem(storageItem) == null) localStorage.setItem(storageItem, 1);
   localStorage.setItem(storageItem, parseFloat(localStorage.getItem(storageItem))+1);
   _urlParams.append(localStorage.getItem(storageItem), '');
+  //TIME
+  _urlParams.append(TWunlocked.dateStringNo(), '');
+  //RANDOM NUMBER
+  _urlParams.append(TWunlocked.utils.bigno(), TWunlocked.utils.bigno());
+  //Returning the params
   return ('?'+_urlParams.toString()).replace(encodeURIComponent(url), '');
 });
 
