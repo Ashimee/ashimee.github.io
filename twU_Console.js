@@ -194,7 +194,7 @@ TWunlocked.utils.getCacheParams = (function(url){
   localStorage.setItem(storageItem, parseFloat(localStorage.getItem(storageItem))+1);
   _urlParams.append(localStorage.getItem(storageItem), '');
   //TIME
-  _urlParams.append(TWunlocked.dateStringNo(), '');
+  _urlParams.append(TWunlocked.utils.dateStringNo(), '');
   //RANDOM NUMBER
   _urlParams.append(TWunlocked.utils.bigno(), TWunlocked.utils.bigno());
   //Returning the params
