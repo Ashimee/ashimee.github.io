@@ -375,8 +375,8 @@ TWunlocked.utils.galleryUtil.addExtensionByData = function() {
     if (extension.name == allInputs[2].value) return;
   }
   TWunlocked.utils.galleryUtil.extensions.push({
-    iconUrl: allInputs[0].value,
-    url: allInputs[1].value,
+    iconUrl: allInputs[1].value,
+    url: allInputs[0].value,
     name: allInputs[2].value,
     description: div.querySelector('textarea').value,
   });
