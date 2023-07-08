@@ -351,7 +351,7 @@ TWunlocked.utils.galleryUtil.updateExtensions = function() {
     newData += addLi(extension.name, old_extension);
   }
   document.getElementById(preAppend+'gallery-extensions').querySelector('ul').innerHTML = newData;
-  localStorage.setItem('twu:extensions', JSON.stringify(TWunlocked.utils.galleryUtil.extension));
+  localStorage.setItem('twu:extensions', JSON.stringify(TWunlocked.utils.galleryUtil.extensions));
 }
 
 TWunlocked.utils.galleryUtil.copyExtension = function(id) {
