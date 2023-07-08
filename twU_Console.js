@@ -509,6 +509,8 @@ if (localStorage.getItem('twu:extensions')!=null) {
   } catch {
     console.log('Invalid JSON');
     localStorage.setItem('twu:extensions', '[]');
+    TWunlocked.utils.newFeaturedExtensions = [];
+    TWunlocked.utils.galleryUtil.extension = [];
   }
 } else {
   localStorage.setItem('twu:extensions', '[]');
