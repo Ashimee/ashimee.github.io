@@ -505,14 +505,15 @@ if (TWunlocked.utils.loadUextsFromUrl(true)) {
 if (localStorage.getItem('twu:extensions')!=null) {
   try {
     TWunlocked.utils.newFeaturedExtensions = JSON.parse(localStorage.getItem('twu:extensions'));
-    TWunlocked.utils.galleryUtil.extension = TWunlocked.utils.newFeaturedExtensions;
+    TWunlocked.utils.galleryUtil.extensions = TWunlocked.utils.newFeaturedExtensions;
   } catch {
     console.log('Invalid JSON');
     localStorage.setItem('twu:extensions', '[]');
     TWunlocked.utils.newFeaturedExtensions = [];
-    TWunlocked.utils.galleryUtil.extension = [];
+    TWunlocked.utils.galleryUtil.extensions = [];
   }
 } else {
   localStorage.setItem('twu:extensions', '[]');
 }
+TWunlocked.utils.galleryUtil.updateExtensions();
 });ImportTWunlock(true,window.vm);
