@@ -33,6 +33,7 @@ console.log('Loaded TW-Unlocked.');
 if (deload) {
   delete win.LoadedTWunlock;
   try { document.getElementById('TWunlocked-ModalDiv').remove(); } catch {};
+  try { document.getElementById('TWunlocked-GalleryModal').remove(); } catch {};
   try { TWunlocked.attemptRemovalOfUSMscript(); } catch {};
   try { TWunlocked.openButton.remove(); } catch {};
   try { TWunlocked.utils.loadUriExtBtn.remove() } catch {};
@@ -298,12 +299,12 @@ TWunlocked.addExtensionToFeaturedGallery = (function(iconUrl, url, name, descrip
   });
 });
 
-document.querySelector('button.gui_extension-button_2T7PA').onclick = (function(){
-  setTimeout(function(){TWunlocked.utils.addAllnewFeaturedToGallery()}, 1000);
-  console.log('loaded extra featured extensions');
+TWunlocked.utils.extBtnAddListen = (function(){
+  document.querySelector('button.gui_extension-button_2T7PA').onclick = (function(){
+    setTimeout(function(){TWunlocked.utils.addAllnewFeaturedToGallery()}, 1000);
+    console.log('loaded extra featured extensions');
+  });
 });
-
-//TWunlocked.addExtensionToFeatured('', 'https://github.com/TurboWarp/extensions/blob/db5373ae7c58bb03605ad6fedd14a2deadc93ff5/extensions/CST1229/zip.js', 'Zip Archives', 'Make zip archives!!')
 
 //Setup options menu.
 const preAppend = 'twUoM_';
@@ -314,11 +315,134 @@ TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optio
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
   </label><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
+  <button onclick="TWunlocked.utils.galleryModal.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button>
+  <hr>
   Submit an extension that cannot be on the gallery to: <a href="https://github.com/SurvExe1Pc/unsafe-extensions">HERE, Click me!!</a>
   <hr>
 </div>`;
 TWunlocked.utils.optionsElm.id = 'TWunlocked-ModalDiv';
 document.body.appendChild(TWunlocked.utils.optionsElm);
+//Extension gallery adder modal
+TWunlocked.utils.galleryModal = document.createElement('dialog');
+TWunlocked.utils.galleryModal.id = 'TWunlocked-GalleryModal';
+TWunlocked.utils.galleryUtil = {
+  extensions: []
+};
+
+TWunlocked.utils.galleryUtil.updateExtensions = function() {
+  const loaded = document.getElementById(preAppend+'gallery-loaded');
+  const nonloaded = document.getElementById(preAppend+'no-gallery-loaded');
+  if (TWunlocked.utils.galleryUtil.extensions.length == 0) {
+    loaded.hidden = true;
+    nonloaded.hidden = false;
+    document.getElementById(preAppend+'gallery-closemenubtn').click();
+    return;
+  }
+  loaded.hidden = false;
+  nonloaded.hidden = true;
+  
+  var newData = '';
+  function addLi(name, id) {
+    return `<li>${name}&nbsp;&nbsp;<button onclick="TWunlocked.utils.galleryUtil.copyExtension(${id})" hidden>Copy JSON</button>&nbsp;&nbsp;<button onclick="TWunlocked.utils.galleryUtil.removeExtension(${id}, this)">Remove</button></li>`;
+  }
+  for (extension in TWunlocked.utils.galleryUtil.extensions) {
+    const old_extension = extension;
+    extension = TWunlocked.utils.galleryUtil.extensions[extension];
+    newData += addLi(extension.name, old_extension);
+  }
+  document.getElementById(preAppend+'gallery-extensions').querySelector('ul').innerHTML = newData;
+  localStorage.setItem('twu:extensions', JSON.stringify(TWunlocked.utils.galleryUtil.extension));
+}
+
+TWunlocked.utils.galleryUtil.copyExtension = function(id) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(JSON.stringify(TWunlocked.utils.galleryUtil.extensions[id]));
+  }
+}
+
+TWunlocked.utils.galleryUtil.removeExtension = function(id, elm) {
+  elm.parentNode.remove();
+  const ext_name = TWunlocked.utils.galleryUtil.extensions[parseInt(id)].name
+  TWunlocked.utils.galleryUtil.extensions = TWunlocked.utils.galleryUtil.extensions.filter(function(el) { return el.name != ext_name; });
+  TWunlocked.utils.galleryUtil.updateExtensions();
+}
+
+TWunlocked.utils.galleryUtil.addExtensionByData = function() {
+  const div = document.getElementById(preAppend+'extension-data');
+  const allInputs = div.querySelectorAll('input');
+  for (extension in TWunlocked.utils.galleryUtil.extensions) {
+    extension = TWunlocked.utils.galleryUtil.extensions[extension];
+    if (extension.name == allInputs[2].value) return;
+  }
+  TWunlocked.utils.galleryUtil.extensions.push({
+    iconUrl: allInputs[0].value,
+    url: allInputs[1].value,
+    name: allInputs[2].value,
+    description: div.querySelector('textarea').value,
+  });
+  TWunlocked.utils.galleryUtil.updateExtensions();
+}
+
+TWunlocked.utils.galleryModal.innerHTML = `<button onclick="TWunlocked.utils.galleryModal.close();TWunlocked.utils.optionsElm.showModal()">Back.</button>
+<br>
+<div>
+    <hr>
+    <strong>
+        <FONT size="4">
+            Add an extension to gallery:
+        </FONT>
+        </strong>
+        <br>
+            <div id="${preAppend}extension-data">
+                &nbsp;&nbsp;
+                <span>
+                    File Url: <input type="url"/>
+                </span><br>
+                &nbsp;&nbsp;
+                <span>
+                    Icon Url: <input type="url"/>
+                </span><br>
+                &nbsp;&nbsp;
+                <span>
+                    Name: <input type="text"/>
+                </span><br>
+                &nbsp;&nbsp;
+                <span>
+                    Description: <textarea></textarea>
+                </span>
+            </div><br>
+        &nbsp;&nbsp;
+        <button onclick="TWunlocked.utils.galleryUtil.addExtensionByData()">
+            Add
+        </button>
+        <hr>
+        <div id="${preAppend}gallery-loaded">
+                <div>
+                    <span>
+                        Loaded extensions:&nbsp;&nbsp;
+                        <button id="${preAppend}gallery-showmenubtn" onclick="document.getElementById('${preAppend}gallery-extensions').hidden=false;this.hidden=true;">
+                            Show menu
+                        </button>
+                    </span>
+                </div>
+        </div>
+        <div id="${preAppend}gallery-extensions" hidden>
+            <ul></ul>
+            <br>
+            <button id="${preAppend}gallery-closemenubtn" onclick="this.parentNode.hidden=true;document.getElementById('${preAppend}gallery-showmenubtn').hidden=false;">
+                Close Menu
+            </button>
+        </div>
+        <div id="${preAppend}no-gallery-loaded" hidden>
+        <span>
+            <strong>No extensions added yet!</strong>
+        </span>
+    </div>
+    </div>
+</div>
+<hr>
+</div>`;
+document.body.appendChild(TWunlocked.utils.galleryModal);
 
 const loadExtensionInput = document.getElementById(preAppend+'le');
 const loadExtension_unsandboxedCheck = document.getElementById(preAppend+'leC');
@@ -358,6 +482,10 @@ TWunlocked.utils.UpdateButton.update = (function(){
   }
 });
 TWunlocked.utils.UpdateButton.btnIvl = setInterval(TWunlocked.utils.UpdateButton.update, 50);
+TWunlocked.utils.updateTick = (function(){
+  if (document.querySelector('button.gui_extension-button_2T7PA')) TWunlocked.utils.extBtnAddListen();
+});
+TWunlocked.utils.updateIvl = setInterval(TWunlocked.utils.updateTick, 50);
 
 //USM
 TWunlocked.attemptRemovalOfUSMscript = (function(){
@@ -371,5 +499,17 @@ TWunlocked.openButton.setID('TWunlocked-NavBtn');
 //Load extensions out of url
 if (TWunlocked.utils.loadUextsFromUrl(true)) {
   TWunlocked.utils.loadUriExtBtn = TWunlocked.addMenuBtn('Load URL extensions', (function(){TWunlocked.utils.loadUextsFromUrl(false);TWunlocked.utils.loadUriExtBtn.remove()}));
+}
+
+//Load all the gallery extensions.
+if (localStorage.getItem('twu:extensions')!=null) {
+  try {
+    TWunlocked.utils.newFeaturedExtensions = JSON.parse(localStorage.getItem('twu:extensions'));
+  } catch {
+    console.log('Invalid JSON');
+    localStorage.setItem('twu:extensions', '[]');
+  }
+} else {
+  localStorage.setItem('twu:extensions', '[]');
 }
 });ImportTWunlock(true,window.vm);
