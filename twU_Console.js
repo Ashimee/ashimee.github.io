@@ -505,6 +505,7 @@ if (TWunlocked.utils.loadUextsFromUrl(true)) {
 if (localStorage.getItem('twu:extensions')!=null) {
   try {
     TWunlocked.utils.newFeaturedExtensions = JSON.parse(localStorage.getItem('twu:extensions'));
+    TWunlocked.utils.galleryUtil.extension = TWunlocked.utils.newFeaturedExtensions;
   } catch {
     console.log('Invalid JSON');
     localStorage.setItem('twu:extensions', '[]');
