@@ -265,6 +265,46 @@ TWunlocked.ToggleOpenButton = (function(){
   TWunlocked.openButton.visibility( !TWunlocked.openButton.visibility('get') );
 });
 
+//Add a button to load a extension in the extension page.
+TWunlocked.utils.newFeaturedExtensions = [];
+TWunlocked.utils.addExtensionToFeaturedGallery = (function(iconUrl, url, name, description){
+  const extensionList = document.querySelector('div.library_library-scroll-grid_1jyXm.library_withFilterBar_26Opm');
+  const CustomExtensionDiv = extensionList.childNodes.item(extensionList.childElementCount-1);
+  const div = CustomExtensionDiv.cloneNode(true);
+  div.querySelector('div>img').src = "https://api.allorigins.win/raw?url="+encodeURIComponent(iconUrl);
+  div.querySelector('div>span.library-item_library-item-name_2qMXu').innerText = name;
+  div.querySelector('div>span.library-item_featured-description_MjIJw').innerText = description;
+  div.onclick = function(){
+    TWunlocked.loadExtensionUnsandboxed(url, true);
+    document.querySelector('span.button_outlined-button_1bS__.modal_back-button_2ej6v').click();
+  };
+  extensionList.appendChild(div);
+  extensionList.appendChild(CustomExtensionDiv);
+  return div;
+});
+
+TWunlocked.utils.addAllnewFeaturedToGallery = (function(){
+  for (extension in TWunlocked.utils.newFeaturedExtensions) {
+    extension = TWunlocked.utils.newFeaturedExtensions[extension];
+    TWunlocked.utils.addExtensionToFeaturedGallery(extension.iconUrl, extension.url, extension.name, extension.description);
+  }
+});
+TWunlocked.addExtensionToFeaturedGallery = (function(iconUrl, url, name, description){
+  TWunlocked.utils.newFeaturedExtensions.push({
+    iconUrl,
+    url,
+    name,
+    description
+  });
+});
+
+document.querySelector('button.gui_extension-button_2T7PA').onclick = (function(){
+  setTimeout(function(){TWunlocked.utils.addAllnewFeaturedToGallery()}, 1000);
+  console.log('loaded extra featured extensions');
+});
+
+//TWunlocked.addExtensionToFeatured('', 'https://github.com/TurboWarp/extensions/blob/db5373ae7c58bb03605ad6fedd14a2deadc93ff5/extensions/CST1229/zip.js', 'Zip Archives', 'Make zip archives!!')
+
 //Setup options menu.
 const preAppend = 'twUoM_';
 TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optionsElm.close()">Close.</button><br>
