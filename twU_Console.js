@@ -278,6 +278,7 @@ TWunlocked.utils.addExtensionToFeaturedGallery = (function(iconUrl, url, name, d
   div.onclick = function(){
     TWunlocked.loadExtensionUnsandboxed(url, true);
     document.querySelector('span.button_outlined-button_1bS__.modal_back-button_2ej6v').click();
+    alert('Please click off this sprite and to another sprite to refresh the extensions.');
   };
   extensionList.appendChild(div);
   extensionList.appendChild(CustomExtensionDiv);
@@ -315,7 +316,9 @@ TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optio
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
   </label><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
-  <button onclick="TWunlocked.utils.galleryModal.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button>
+  <button onclick="TWunlocked.utils.galleryModal.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button><br>
+  <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
+  <button onclick="vm.refreshWorkspace()">Refresh Workspace</button>
   <hr>
   Submit an extension that cannot be on the gallery to: <a href="https://github.com/SurvExe1Pc/unsafe-extensions">HERE, Click me!!</a>
   <hr>
