@@ -278,7 +278,7 @@ TWunlocked.utils.addExtensionToFeaturedGallery = (function(iconUrl, url, name, d
   div.onclick = function(){
     TWunlocked.loadExtensionUnsandboxed(url, true);
     document.querySelector('span.button_outlined-button_1bS__.modal_back-button_2ej6v').click();
-    alert('Please click off this sprite and to another sprite to refresh the extensions.');
+    setTimeout(function(){alert('Please click off this sprite and to another sprite to refresh the extensions.')},3530);
   };
   extensionList.appendChild(div);
   extensionList.appendChild(CustomExtensionDiv);
