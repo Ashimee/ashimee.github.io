@@ -15,7 +15,7 @@
 // TW-Unlocked
 // Other-scripts: https://github.com/SurvExe1Pc/userscripts
 // Adds some useful functions to turbowarp that are disabled due to security issues.
-// v1.0
+// v3.1
 // Made By SurvExE1Pc.
 var ImportTWunlock = (async function (deload, vm) {
 
