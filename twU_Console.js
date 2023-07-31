@@ -455,6 +455,15 @@ var ImportTWunlock = (async function (deload, vm) {
       });
   });
 
+  TWunlocked.utils.hasTriedToAddForI = false;
+  TWunlocked.utils.addForIextension = function(){
+    if (!TWunlocked.utils.hasTriedToAddForI) {
+      TWunlocked.utils.hasTriedToAddForI = true;
+      TWunlocked.loadExtensionUnsandboxed('https://survexe1pc.github.io/bringBackForI.js');
+      alert('The for i block should appear within 10 seconds, otherwise check the console!');
+    }
+  }
+
   //Setup options menu.
   const preAppend = 'twUoM_';
   TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optionsElm.close()">Close.</button><br>
@@ -462,7 +471,7 @@ var ImportTWunlock = (async function (deload, vm) {
   <hr>
   <label><button onclick="TWunlocked.utils.extMan()">Load extension</button> : 
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
-  </label><br><hr>
+  </label><br><button id="${preAppend}" onclick="TWunlocked.utils.addForIextension();this.nextElementSibling.remove();this.remove();" title="#Bring Back For I">Bring back the For I block</button><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
   <button onclick="TWunlocked.utils.galleryModal.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button><br>
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
