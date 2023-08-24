@@ -461,7 +461,7 @@ var ImportTWunlock = (async function (deload, vm) {
   TWunlocked.utils.addForIextension = function(){
     if (!TWunlocked.utils.hasTriedToAddForI) {
       TWunlocked.utils.hasTriedToAddForI = true;
-      TWunlocked.loadExtensionUnsandboxed('https://survexe1pc.github.io/bringBackForI.js');
+      TWunlocked.loadExtensionUnsandboxed('https://surv.is-a.dev/bringBackForI.js');
       alert('The for i block should appear within 10 seconds, otherwise check the console!');
     }
   }
