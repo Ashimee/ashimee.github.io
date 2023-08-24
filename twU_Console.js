@@ -76,12 +76,14 @@ var ImportTWunlock = (async function (deload, vm) {
   }
 
   //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
-  if (document.location.hostname != 'turbowarp.org') {
+  let _isDesktop = document.location.href.includes('TurboWarp/resources/app.asar');
+  if (document.location.hostname != 'turbowarp.org' && !_isDesktop) {
     console.error('TW-Unlocked | Not a valid page.');
     return
   }
 
   window.TWunlocked = {};
+  TWunlocked.isDesktop = _isDesktop;
   TWunlocked.utils = {};
 
   //Utilities
