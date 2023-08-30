@@ -325,7 +325,7 @@ var ImportTWunlock = (async function (deload, vm) {
         }, {}]
       }, {}, [])("/")
     });
-    const data = await fetch(`https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`)
+    const data = await fetch(`https://corsproxy.io/?${encodeURIComponent(url)}`)
       .then(data => {
         return (data.text())
       });
@@ -417,7 +417,7 @@ var ImportTWunlock = (async function (deload, vm) {
     const CustomExtensionDiv = extensionList.childNodes.item(extensionList.childElementCount - 1);
     const div = CustomExtensionDiv.cloneNode(true);
     div.querySelector('div>img')
-      .src = "https://api.allorigins.win/raw?url=" + encodeURIComponent(iconUrl);
+      .src = "https://corsproxy.io/?" + encodeURIComponent(iconUrl);
     div.querySelector('div>span.library-item_library-item-name_2qMXu')
       .innerText = name;
     div.querySelector('div>span.library-item_featured-description_MjIJw')
