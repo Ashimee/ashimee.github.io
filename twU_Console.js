@@ -123,13 +123,15 @@ var ImportTWunlock = (async function (deload, vm) {
   };
   TWunlocked.utils.optionsElm = document.createElement('dialog');
   TWunlocked.utils.fileGroup = (TWunlocked.isDesktop ? 'div.menu-bar_file-group_ygFQx' : 'div.menu-bar_file-group_1_CHX');
+  TWunlocked.utils.hoverableClass = (TWunlocked.isDesktop ? 'menu-bar_menu-bar-item_hHpQG' : 'menu-bar_hoverable_c6WFB');
+  TWunlocked.utils.menuItemClass = (TWunlocked.isDesktop ? 'menu-bar_hoverable_Y5GVe' : 'menu-bar_hoverable_c6WFB');
   TWunlocked.twMenuBtn = class {
     #doc_elm;
     constructor() {
       const empty_div = document.createElement('div');
       this.#doc_elm = empty_div;
-      this.#doc_elm.classList.add('menu-bar_menu-bar-item_oLDa-');
-      this.#doc_elm.classList.add('menu-bar_hoverable_c6WFB');
+      this.#doc_elm.classList.add(TWunlocked.utils.menuItemClass);
+      this.#doc_elm.classList.add(TWunlocked.utils.hoverableClass);
       this.#doc_elm.innerHTML = '<div><span>New Button</span></div>';
       this.#doc_elm.backup_remove = this.#doc_elm.remove;
       this.#doc_elm.remove = () => {
