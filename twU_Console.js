@@ -122,6 +122,7 @@ var ImportTWunlock = (async function (deload, vm) {
     cr: vm.securityManager.canRedirect
   };
   TWunlocked.utils.optionsElm = document.createElement('dialog');
+  TWunlocked.utils.fileGroup = (TWunlocked.isDesktop ? 'div.menu-bar_file-group_ygFQx' : 'div.menu-bar_file-group_1_CHX');
   TWunlocked.twMenuBtn = class {
     #doc_elm;
     constructor() {
@@ -168,7 +169,7 @@ var ImportTWunlock = (async function (deload, vm) {
       this.#doc_elm.id = elm_id;
     }
     addSelfToNav() {
-      document.querySelector('div.menu-bar_file-group_1_CHX')
+      document.querySelector(TWunlocked.utils.fileGroup)
         .appendChild(this.#doc_elm);
     }
   }
@@ -178,7 +179,7 @@ var ImportTWunlock = (async function (deload, vm) {
     button.setClickCallback(callback);
     var tmp = button;
     button = button.exportDocElm();
-    document.querySelector('div.menu-bar_file-group_1_CHX')
+    document.querySelector(TWunlocked.utils.fileGroup)
       .appendChild(button);
     return (tmp);
   });
@@ -634,7 +635,7 @@ var ImportTWunlock = (async function (deload, vm) {
   });
 
   TWunlocked.utils.UpdateButton = {}
-  TWunlocked.utils.UpdateButton.dontFixButton = false;
+  TWunlocked.utils.UpdateButton.dontFixButton = TWunlocked.isDesktop;
   TWunlocked.utils.UpdateButton.oldHref = document.location.href;
   TWunlocked.utils.UpdateButton.update = (function () {
     //console.log(`Checking button & href..\n\tDAT:\n\t${document.location.href}\t${TWunlocked.utils.UpdateButton.oldHref}\t`);
@@ -645,7 +646,7 @@ var ImportTWunlock = (async function (deload, vm) {
       delete TWunlocked.utils.UpdateButton;
       return;
     }
-    if ((document.location.href != TWunlocked.utils.UpdateButton.oldHref) || (document.getElementById('TWunlocked-NavBtn') == null)) {
+    if (!TWunlocked.isDesktop && ((document.location.href != TWunlocked.utils.UpdateButton.oldHref) || (document.getElementById('TWunlocked-NavBtn') == null))) {
       TWunlocked.openButton.addSelfToNav();
       return;
     }
