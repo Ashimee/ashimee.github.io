@@ -5,8 +5,13 @@ const child = require('child_process');
 const appObj = require('electron').app;
 const fsPromise = require('fs/promises');
 const fs = require('fs');
+const { get } = require('http');
 
-contextBridge.exposeInMainWorld('fakeAPI', {testing: true});
+function getCurrentDirectory() {
+    return require('electron').app.getAppPath();
+}
+
+contextBridge.exposeInMainWorld('CD', getCurrentDirectory);
 
 contextBridge.exposeInMainWorld('shellAPI', shell);
 contextBridge.exposeInMainWorld('fileSystemPromiseAPI', fsPromise);
