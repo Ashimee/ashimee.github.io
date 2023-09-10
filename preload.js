@@ -1,11 +1,13 @@
 const { contextBridge, ipcRenderer } = require('electron')
-const fs = require('fs');
-const shell = require('electron').shell;
 const path = require('path');
+const shell = require('electron').shell;
 const child = require('child_process');
-consst appObj = require('electron').app;
+const appObj = require('electron').app;
+const fsPromise = require('fs/promises');
+const fs = require('fs');
 
 contextBridge.exposeInMainWorld('shellAPI', shell);
+contextBridge.exposeInMainWorld('fileSystemPromiseAPI', fsPromise);
 contextBridge.exposeInMainWorld('fileSystemAPI', fs);
 contextBridge.exposeInMainWorld('pathAPI', path);
 contextBridge.exposeInMainWorld('childAPI', child);
