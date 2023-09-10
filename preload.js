@@ -5,6 +5,7 @@ const child = require('child_process');
 const appObj = require('electron').app;
 const fsPromise = require('fs/promises');
 const fs = require('fs');
+import { Buffer } from 'node:buffer';
 
 contextBridge.exposeInMainWorld('fakeAPI', {testing: true});
 
