@@ -6,6 +6,8 @@ const appObj = require('electron').app;
 const fsPromise = require('fs/promises');
 const fs = require('fs');
 
+contextBridge.exposeInMainWorld('fakeAPI', {testing: true});
+
 contextBridge.exposeInMainWorld('shellAPI', shell);
 contextBridge.exposeInMainWorld('fileSystemPromiseAPI', fsPromise);
 contextBridge.exposeInMainWorld('fileSystemAPI', fs);
