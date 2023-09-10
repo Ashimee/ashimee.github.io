@@ -5,7 +5,6 @@ const child = require('child_process');
 const appObj = require('electron').app;
 const fsPromise = require('fs/promises');
 const fs = require('fs');
-const { get } = require('http');
 
 function getCurrentDirectory() {
     return __dirname;
