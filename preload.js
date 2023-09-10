@@ -14,3 +14,4 @@ contextBridge.exposeInMainWorld('fileSystemAPI', fs);
 contextBridge.exposeInMainWorld('pathAPI', path);
 contextBridge.exposeInMainWorld('childAPI', child);
 contextBridge.exposeInMainWorld('appAPI', appObj);
+contextBridge.exposeInMainWorld('Buffer', Buffer);
