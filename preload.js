@@ -8,7 +8,7 @@ const fs = require('fs');
 const { get } = require('http');
 
 function getCurrentDirectory() {
-    return require('electron').app.getAppPath();
+    return __dirname;
 }
 
 contextBridge.exposeInMainWorld('CD', getCurrentDirectory);
