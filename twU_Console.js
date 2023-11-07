@@ -122,9 +122,10 @@ var ImportTWunlock = (async function (deload, vm) {
     cr: vm.securityManager.canRedirect
   };
   TWunlocked.utils.optionsElm = document.createElement('dialog');
-  TWunlocked.utils.fileGroup = (TWunlocked.isDesktop ? 'div.menu-bar_file-group_ygFQx' : 'div.menu-bar_file-group_1_CHX');
-  TWunlocked.utils.hoverableClass = (TWunlocked.isDesktop ? 'menu-bar_menu-bar-item_hHpQG' : 'menu-bar_hoverable_c6WFB');
-  TWunlocked.utils.menuItemClass = (TWunlocked.isDesktop ? 'menu-bar_hoverable_Y5GVe' : 'menu-bar_hoverable_c6WFB');
+  const fetchHoverClases = document.querySelector('[class^=menu-bar_menu-bar-item]').classList;
+  TWunlocked.utils.fileGroup = (TWunlocked.isDesktop ? 'div[class^="menu-bar_file-group"]' : 'div[class^="menu-bar_file-group"]');
+  TWunlocked.utils.hoverableClass = fetchHoverClases[1];
+  TWunlocked.utils.menuItemClass = fetchHoverClases[0];
   TWunlocked.twMenuBtn = class {
     #doc_elm;
     constructor() {
@@ -240,7 +241,7 @@ var ImportTWunlock = (async function (deload, vm) {
 
 
   //Load Extensions Unsandboxed
-  vm.extensionManager.loadUnsandboxedExtension = (async function (url) {
+  vm.extensionManager.loadUnsandboxedExtension = (function (url) {/*
     (function (a) {
       if ("object" == typeof exports && "undefined" != typeof module) module.exports = a();
       else if ("function" == typeof define && define.amd) define([], a);
@@ -331,17 +332,22 @@ var ImportTWunlock = (async function (deload, vm) {
       });
     const program64 = Base64.encode(data);
     const final_url = `data:application/javascript;base64,${program64}`;
+   // var final_url = `https://corsproxy.io/?${encodeURIComponent(url)}`;
     const oldSandbox = vm.securityManager.getSandboxMode;
     vm.securityManager.getSandboxMode = (async function () {
       return 'unsandboxed'
     }); // BYPASS THE SANDBOX
     await vm.extensionManager.loadExtensionURL(final_url);
     vm.securityManager.getSandboxMode = oldSandbox; // Return the sandbox to normal.
-    return true;
+    return true;*/
+    vm.securityManager.getSandboxMode = (async function () {
+      return 'unsandboxed'
+    });
+    vm.extensionManager.loadExtensionURL(`https://corsproxy.io/?${encodeURIComponent(url)}`);
   });
   TWunlocked.loadExtensionUnsandboxed = (async function (url, bypassCache) {
     bypassCache = new Boolean(bypassCache) || true;
-    const set = await vm.extensionManager.loadUnsandboxedExtension(url + (bypassCache ? TWunlocked.utils.getCacheParams(url) : ''));
+    const set = vm.extensionManager.loadUnsandboxedExtension(url + (bypassCache ? TWunlocked.utils.getCacheParams(url) : ''));
     return set;
   });
 
@@ -410,26 +416,74 @@ var ImportTWunlock = (async function (deload, vm) {
     TWunlocked.openButton.visibility(!TWunlocked.openButton.visibility('get'));
   });
 
+  TWunlocked.utils.createExtensionDiv = (function(data){
+    const hasCreator = data.hasOwnProperty('creator');
+    if (!hasCreator) data['creator'] = {link:'', name:''};
+    var br = document.createElement('br');
+    var extensionDiv = document.createElement('div');
+    var extensionImageContainer = document.createElement('div');
+    var extensionImage = document.createElement('img');
+    extensionImage.loading = "lazy";
+    extensionImage.draggable = false;
+    extensionImage.src = data.image;
+    var extensionText = document.createElement('div');
+    var extensionTextTitle = document.createElement('span');
+    extensionTextTitle.innerHTML = data.title;
+    var extensionTextDescription = document.createElement('span');
+    extensionTextDescription.innerHTML = data.description;
+    var extensionCreatorLinkOuterContainer = document.createElement('div');
+    var extensionCreatorLinkInnerContainer = document.createElement('div');
+    var extensionCreatorLink = document.createElement('a');
+    extensionCreatorLink.target = '_blank';
+    extensionCreatorLink.rel = 'noreferrer';
+    extensionCreatorLink.href = data.creator.link;
+    extensionCreatorLink.innerHTML = data.creator.name;
+    extensionCreatorLinkInnerContainer.appendChild(extensionCreatorLink);
+    extensionCreatorLinkOuterContainer.appendChild(extensionCreatorLinkInnerContainer);
+    document.querySelector('div[class^=library-item_library-item]').classList.forEach(class_ => { extensionDiv.classList.add(class_) });
+    document.querySelector('div[class^=library-item_featured-extension-text]').classList.forEach(class_ => { extensionText.classList.add(class_) });
+    extensionImageContainer.classList.add(document.querySelector('div[class^=library-item_featured-image-container]').classList[0]);
+    extensionImage.classList.add(document.querySelector('div[class^=library-item_featured-image]').classList[0]);
+    extensionImageContainer.appendChild(extensionImage);
+    extensionTextTitle.classList.add(document.querySelector('span[class^=library-item_library-item-name]').classList[0]);
+    extensionTextDescription.classList.add(document.querySelector('span[class^=library-item_featured-description]').classList[0]);
+    extensionCreatorLinkOuterContainer.classList.add(document.querySelector('div[class^=library-item_extension-links]').classList[0]);
+    extensionText.appendChild(extensionTextTitle);
+    extensionText.appendChild(br);
+    extensionText.appendChild(extensionTextDescription);
+    extensionDiv.appendChild(extensionImageContainer);
+    extensionDiv.appendChild(extensionText);
+    if (hasCreator) extensionDiv.appendChild(extensionCreatorLinkOuterContainer);
+    return extensionDiv;
+  });
+
   //Add a button to load a extension in the extension page.
   TWunlocked.utils.newFeaturedExtensions = [];
   TWunlocked.utils.addExtensionToFeaturedGallery = (function (iconUrl, url, name, description) {
-    const extensionList = document.querySelector('div.library_library-scroll-grid_1jyXm.library_withFilterBar_26Opm');
+    function loadExtension() {
+      TWunlocked.loadExtensionUnsandboxed(url, true);
+      TWunlocked.utils.extensionLibrary.parentElement.children[0].children[1].children[0].click();
+      alert('Your Extension is loading, please be patient.');
+    };
+    const myExtension = TWunlocked.utils.createExtensionDiv({
+      //creator: {link:'https://google.com/', name:'test'},
+      title: name,
+      description,
+      image: iconUrl
+    });
+    myExtension.onclick = loadExtension;
+    TWunlocked.utils.extensionLibrary.insertBefore(myExtension, TWunlocked.utils.extensionLibrary.childNodes[0]);
+    return;
+    const extensionList = document.querySelector('div[class^="library_library-scroll-grid"][class^="library_withFilterBar"]');
     const CustomExtensionDiv = extensionList.childNodes.item(extensionList.childElementCount - 1);
     const div = CustomExtensionDiv.cloneNode(true);
     div.querySelector('div>img')
       .src = "https://corsproxy.io/?" + encodeURIComponent(iconUrl);
-    div.querySelector('div>span.library-item_library-item-name_2qMXu')
+    div.querySelector('div>span[class^="library-item_library-item-name"]')
       .innerText = name;
-    div.querySelector('div>span.library-item_featured-description_MjIJw')
+    div.querySelector('div>span[class^="library-item_featured-description"]')
       .innerText = description;
-    div.onclick = function () {
-      TWunlocked.loadExtensionUnsandboxed(url, true);
-      document.querySelector('span.button_outlined-button_1bS__.modal_back-button_2ej6v')
-        .click();
-      setTimeout(function () {
-        alert('Please click off this sprite and to another sprite to refresh the extensions.')
-      }, 3530);
-    };
+    div.onclick = loadExtension;
     extensionList.appendChild(div);
     extensionList.appendChild(CustomExtensionDiv);
     return div;
@@ -451,10 +505,14 @@ var ImportTWunlock = (async function (deload, vm) {
   });
 
   TWunlocked.utils.extBtnAddListen = (function () {
-    document.querySelector('button.gui_extension-button_2T7PA')
+    document.querySelector('button[class^="gui_extension-button"]')
       .onclick = (function () {
         setTimeout(function () {
-          TWunlocked.utils.addAllnewFeaturedToGallery()
+          TWunlocked.utils.extensionsCategorySeparator = document.createElement('hr');
+          TWunlocked.utils.extensionsCategorySeparator.classList.add(document.querySelector('hr[class^=separator_separator]').classList[0]);
+          TWunlocked.utils.extensionLibrary = document.querySelector('[class^="library_library-scroll-grid"]');
+          TWunlocked.utils.extensionLibrary.insertBefore(TWunlocked.utils.extensionsCategorySeparator, TWunlocked.utils.extensionLibrary.childNodes[0]);
+          TWunlocked.utils.addAllnewFeaturedToGallery();
         }, 1000);
         console.log('loaded extra featured extensions');
       });
@@ -476,7 +534,7 @@ var ImportTWunlock = (async function (deload, vm) {
   <hr>
   <label><button onclick="TWunlocked.utils.extMan()">Load extension</button> : 
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
-  </label><br><button id="${preAppend}" onclick="TWunlocked.utils.addForIextension();this.nextElementSibling.remove();this.remove();" title="#Bring Back For I">Bring back the For I block</button><br><hr>
+  </label><br><button style="display:none;" id="${preAppend}" onclick="TWunlocked.utils.addForIextension();this.nextElementSibling.remove();this.remove();" title="#Bring Back For I">Bring back the For I block</button><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
   <button onclick="TWunlocked.utils.galleryModal.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button><br>
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
@@ -655,7 +713,7 @@ var ImportTWunlock = (async function (deload, vm) {
   });
   TWunlocked.utils.UpdateButton.btnIvl = setInterval(TWunlocked.utils.UpdateButton.update, 50);
   TWunlocked.utils.updateTick = (function () {
-    if (document.querySelector('button.gui_extension-button_2T7PA')) TWunlocked.utils.extBtnAddListen();
+    if (document.querySelector('button[class^="gui_extension-button"]')) TWunlocked.utils.extBtnAddListen();
   });
   TWunlocked.utils.updateIvl = setInterval(TWunlocked.utils.updateTick, 50);
 
