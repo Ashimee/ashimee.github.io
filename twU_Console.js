@@ -239,6 +239,14 @@ var ImportTWunlock = (async function (deload, vm) {
       .replace(encodeURIComponent(url), '');
   });
 
+  if (!TWunlocked.isDesktop) {
+    const styling = document.createElement('style');
+    styling.innerHTML = `
+dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
+  background-color: rgba(107, 107, 107, 1);
+}`;
+    document.head.appendChild(styling);
+  }
 
   //Load Extensions Unsandboxed
   vm.extensionManager.loadUnsandboxedExtension = (function (url) {
