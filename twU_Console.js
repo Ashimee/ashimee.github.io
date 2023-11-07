@@ -15,7 +15,7 @@
 // TW-Unlocked
 // Other-scripts: https://github.com/SurvExe1Pc/userscripts
 // Adds some useful functions to turbowarp that are disabled due to security issues.
-// v3.1
+// v3.3
 // Made By SurvExE1Pc.
 var ImportTWunlock = (async function (deload, vm) {
 
@@ -77,7 +77,7 @@ var ImportTWunlock = (async function (deload, vm) {
 
   //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
   let _isDesktop = document.location.href.includes('TurboWarp/resources/app.asar');
-  if (document.location.hostname != 'turbowarp.org' && !_isDesktop) {
+  if (!['turbowarp.org', 'staging.turbowarp.org'].includes(document.location.hostname) && !_isDesktop) {
     console.error('TW-Unlocked | Not a valid page.');
     return
   }
