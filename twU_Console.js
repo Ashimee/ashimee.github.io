@@ -402,6 +402,29 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
       TWunlocked.utils.addExtensionToFeaturedGallery(extension.iconUrl, extension.url, extension.name, extension.description);
     }
   });
+
+  TWunlocked.utils.attemptToLoadMyGallery = (async function() {
+    var extensions = []
+    var site = 'https://surv.is-a.dev/unsafe-extensions';
+    if (!TWunlocked.isDesktop) TWunlocked.utils.extensionLibrary.insertBefore(TWunlocked.utils.extensionsCategorySeparator.cloneNode(true), TWunlocked.utils.extensionLibrary.childNodes[0]);
+    return Promise.resolve(fetch(site+'/').then(text=>text.text()).then(text=>{
+        let dom = new DOMParser().parseFromString(text, 'text/html');
+        dom.querySelectorAll('div.extension').forEach(ext => {
+            let extension = {
+              name: ext.querySelector('h3').innerHTML,
+              description: ext.querySelector('p').innerHTML,
+              image: ext.querySelector('img.extension-image').src.replace(document.location.origin, site),
+              url: (ext.querySelector('a.copy')||ext.querySelector('a.open')).href
+            };
+            extensions.push(extension);
+          });
+          for (extension in extensions) {
+            extension = extensions[extension];
+            TWunlocked.utils.addExtensionToFeaturedGallery(extension.image, extension.url, extension.name, extension.description);
+          }
+    }).then(()=>{return Promise.resolve()}));
+  })
+
   TWunlocked.addExtensionToFeaturedGallery = (function (iconUrl, url, name, description) {
     TWunlocked.utils.newFeaturedExtensions.push({
       iconUrl,
@@ -414,12 +437,21 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
   TWunlocked.utils.extBtnAddListen = (function () {
     document.querySelector('button[class^="gui_extension-button"]')
       .onclick = (function () {
-        setTimeout(function () {
+        setTimeout(async function () {
           TWunlocked.utils.extensionsCategorySeparator = document.createElement('hr');
           if (!TWunlocked.isDesktop) TWunlocked.utils.extensionsCategorySeparator.classList.add(document.querySelector('hr[class^=separator_separator]').classList[0]);
           TWunlocked.utils.extensionLibrary = document.querySelector('[class^="library_library-scroll-grid"]');
-          if (!TWunlocked.isDesktop) TWunlocked.utils.extensionLibrary.insertBefore(TWunlocked.utils.extensionsCategorySeparator, TWunlocked.utils.extensionLibrary.childNodes[0]);
-          TWunlocked.utils.addAllnewFeaturedToGallery();
+          if (TWunlocked.utils.galleryUtil.gallerys.getSet('myGallery') || TWunlocked.utils.galleryUtil.gallerys.getSet('spGallery')) {
+            if (TWunlocked.utils.galleryUtil.gallerys.getSet('myGallery')) {
+              await TWunlocked.utils.attemptToLoadMyGallery();
+            }
+            if (!TWunlocked.isDesktop) TWunlocked.utils.extensionLibrary.insertBefore(TWunlocked.utils.extensionsCategorySeparator.cloneNode(true), TWunlocked.utils.extensionLibrary.childNodes[0]);
+            TWunlocked.utils.addAllnewFeaturedToGallery();
+          } else {
+            if (!TWunlocked.isDesktop) TWunlocked.utils.extensionLibrary.insertBefore(TWunlocked.utils.extensionsCategorySeparator.cloneNode(true), TWunlocked.utils.extensionLibrary.childNodes[0]);
+            TWunlocked.utils.addAllnewFeaturedToGallery();
+          }
+          
         }, 1000);
         console.log('loaded extra featured extensions');
       });
@@ -443,7 +475,7 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
   </label><br><button style="display:none;" id="${preAppend}" onclick="TWunlocked.utils.addForIextension();this.nextElementSibling.remove();this.remove();" title="#Bring Back For I">Bring back the For I block</button><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
-  <button onclick="TWunlocked.utils.galleryModal.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button><br>
+  <button onclick="TWunlocked.utils.galleryUtil.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button><br>
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
   <button onclick="vm.refreshWorkspace()">Refresh Workspace</button>
   <hr>
@@ -520,66 +552,93 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
     TWunlocked.utils.galleryUtil.updateExtensions();
   }
 
-  TWunlocked.utils.galleryModal.innerHTML = `<button onclick="TWunlocked.utils.galleryModal.close();TWunlocked.utils.optionsElm.showModal()">Back.</button>
-<br>
-<div>
-    <hr>
-    <strong>
-        <FONT size="4">
-            Add an extension to gallery:
-        </FONT>
-        </strong>
-        <br>
-            <div id="${preAppend}extension-data">
-                &nbsp;&nbsp;
-                <span>
-                    File Url: <input type="url"/>
-                </span><br>
-                &nbsp;&nbsp;
-                <span>
-                    Icon Url: <input type="url"/>
-                </span><br>
-                &nbsp;&nbsp;
-                <span>
-                    Name: <input type="text"/>
-                </span><br>
-                &nbsp;&nbsp;
-                <span>
-                    Description: <textarea></textarea>
-                </span>
-            </div><br>
-        &nbsp;&nbsp;
-        <button onclick="TWunlocked.utils.galleryUtil.addExtensionByData()">
-            Add
-        </button>
-        <hr>
-        <div id="${preAppend}gallery-loaded">
-                <div>
-                    <span>
-                        Loaded extensions:&nbsp;&nbsp;
-                        <button id="${preAppend}gallery-showmenubtn" onclick="document.getElementById('${preAppend}gallery-extensions').hidden=false;this.hidden=true;">
-                            Show menu
-                        </button>
-                    </span>
-                </div>
-        </div>
-        <div id="${preAppend}gallery-extensions" hidden>
-            <ul></ul>
-            <br>
-            <button id="${preAppend}gallery-closemenubtn" onclick="this.parentNode.hidden=true;document.getElementById('${preAppend}gallery-showmenubtn').hidden=false;">
-                Close Menu
-            </button>
-        </div>
-        <div id="${preAppend}no-gallery-loaded" hidden>
-        <span>
-            <strong>No extensions added yet!</strong>
-        </span>
-    </div>
-    </div>
-</div>
-<hr>
-</div>`;
+  TWunlocked.utils.galleryUtil.showModal = function() {
+    TWunlocked.utils.galleryUtil.updateExtensions();
+    TWunlocked.utils.galleryModal.showModal();
+  }
+
+  TWunlocked.utils.galleryUtil.gallerys = {}
+  if (localStorage.getItem('twu:gallerysCheckbox') == undefined) localStorage.setItem('twu:gallerysCheckbox', '{}');
+  TWunlocked.utils.galleryUtil.gallerys.updateSet = function(set, val) {
+    var qwerty = JSON.parse(localStorage.getItem('twu:gallerysCheckbox'));
+    qwerty[set] = val;
+    localStorage.setItem('twu:gallerysCheckbox', JSON.stringify(qwerty));
+  }
+  TWunlocked.utils.galleryUtil.gallerys.getSet = function(set) {
+    return JSON.parse(localStorage.getItem('twu:gallerysCheckbox'))[set];
+  }
+  TWunlocked.utils.galleryUtil.gallerys.updateAutoLoad = function(id) {
+    switch(id) {
+      case 1:
+        TWunlocked.utils.galleryUtil.gallerys.updateSet('myGallery', (document.querySelector(`#${preAppend}autoLoadUnsafeGal`).checked));
+        break;
+    }
+    const updatedHTML = TWunlocked.utils.galleryUtil.innerHTML();
+    TWunlocked.utils.galleryModal.innerHTML = updatedHTML;
+  }
+  TWunlocked.utils.galleryUtil.innerHTML = function(){return`<button onclick="TWunlocked.utils.galleryModal.close();TWunlocked.utils.optionsElm.showModal()">Back.</button>
+  <br>
+  <div>
+      <hr>
+      <strong>
+          <FONT size="4">
+              Add an extension to gallery:
+          </FONT>
+          </strong>
+          <br>
+              <div id="${preAppend}extension-data">
+                  &nbsp;&nbsp;
+                  <span>
+                      File Url: <input type="url"/>
+                  </span><br>
+                  &nbsp;&nbsp;
+                  <span>
+                      Icon Url: <input type="url"/>
+                  </span><br>
+                  &nbsp;&nbsp;
+                  <span>
+                      Name: <input type="text"/>
+                  </span><br>
+                  &nbsp;&nbsp;
+                  <span>
+                      Description: <textarea></textarea>
+                  </span>
+              </div><br>
+          &nbsp;&nbsp;
+          <button onclick="TWunlocked.utils.galleryUtil.addExtensionByData()">
+              Add
+          </button>
+          <hr>
+          <div id="${preAppend}gallery-loaded">
+                  <div>
+                      <span>
+                          Loaded extensions:&nbsp;&nbsp;
+                          <button id="${preAppend}gallery-showmenubtn" onclick="document.getElementById('${preAppend}gallery-extensions').hidden=false;this.hidden=true;">
+                              Show menu
+                          </button>
+                      </span>
+                  </div>
+          </div>
+          <div id="${preAppend}gallery-extensions" hidden>
+              <ul></ul>
+              <br>
+              <button id="${preAppend}gallery-closemenubtn" onclick="this.parentNode.hidden=true;document.getElementById('${preAppend}gallery-showmenubtn').hidden=false;">
+                  Close Menu
+              </button>
+          </div>
+          <div id="${preAppend}no-gallery-loaded" hidden>
+          <span>
+              <strong>No extensions added yet!</strong>
+          </span>
+      </div>
+      <hr>
+      <label>Auto Load Extensions from <a href="https://surv.is-a.dev/unsafe-extensions/">unsafe-gallery</a>: <input type="checkbox" id="${preAppend}autoLoadUnsafeGal"${TWunlocked.utils.galleryUtil.gallerys.getSet('myGallery') ? ` checked` : ''} onclick="TWunlocked.utils.galleryUtil.gallerys.updateAutoLoad(1)"/>
+      </div>
+  </div>
+  <hr>
+  </div>`};
   document.body.appendChild(TWunlocked.utils.galleryModal);
+  TWunlocked.utils.galleryModal.innerHTML = TWunlocked.utils.galleryUtil.innerHTML();
 
   const loadExtensionInput = document.getElementById(preAppend + 'le');
   const loadExtension_unsandboxedCheck = document.getElementById(preAppend + 'leC');
