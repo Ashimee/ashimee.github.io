@@ -15,7 +15,7 @@
 // TW-Unlocked
 // Other-scripts: https://github.com/SurvExe1Pc/userscripts
 // Adds some useful functions to turbowarp that are disabled due to security issues.
-// v3.7
+// v3.8
 // Made By SurvExE1Pc.
 var ImportTWunlock = (async function (deload, vm) {
 
@@ -410,11 +410,12 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
     return Promise.resolve(fetch(site+'/').then(text=>text.text()).then(text=>{
         let dom = new DOMParser().parseFromString(text, 'text/html');
         dom.querySelectorAll('div.extension').forEach(ext => {
+            const uri = (ext.querySelector('a.copy')||ext.querySelector('a.open')).href.split('/');
             let extension = {
               name: ext.querySelector('h3').innerHTML,
               description: ext.querySelector('p').innerHTML,
               image: ext.querySelector('img.extension-image').src.replace(document.location.origin, site),
-              url: (ext.querySelector('a.copy')||ext.querySelector('a.open')).href.src.replace(document.location.origin, site),
+              url: `https://surv.is-a.dev/unsafe-extensions/${uri[uri.length-2]}/${uri[uri.length-1]}`
             };
             extensions.push(extension);
           });
