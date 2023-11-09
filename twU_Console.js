@@ -11,13 +11,22 @@
 // ==/UserScript==
 //The above is fake data
 
-// ==IMPORT VIA BOOKMARKLET OR CONSOLE==
-// TW-Unlocked
-// Other-scripts: https://github.com/SurvExe1Pc/userscripts
-// Adds some useful functions to turbowarp that are disabled due to security issues.
-// v3.8
-// Made By SurvExE1Pc.
+/*!
+ *  ==IMPORT VIA BOOKMARKLET OR CONSOLE==
+ * TW-Unlocked
+ * Other-scripts: https://github.com/SurvExe1Pc/userscripts
+ * Adds some useful functions to turbowarp that are disabled due to security issues.
+ * version below
+ * Made By SurvExE1Pc.
+*/
+
+/*! todo:
+ *       1. Make it so a user can add a custom turbowarp site.
+ *       2. Desktop bug fixes
+*/
 var ImportTWunlock = (async function (deload, vm) {
+
+  const VERSION = 4;
 
   //Disable userscript.
   var tmp = null;
@@ -77,12 +86,16 @@ var ImportTWunlock = (async function (deload, vm) {
 
   //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
   let _isDesktop = document.location.href.includes('TurboWarp/resources/app.asar');
-  if (!['turbowarp.org', 'staging.turbowarp.org'].includes(document.location.hostname) && !_isDesktop) {
-    console.error('TW-Unlocked | Not a valid page.');
-    return
+  if (!['turbowarp.org', 'staging.turbowarp.org', 'twplus.pages.dev'].includes(document.location.hostname) && !_isDesktop) {
+    console.error(`TW-Unlocked v${VERSION} | Not a valid page.`);
+    return;
   }
 
-  window.TWunlocked = {};
+  console.log(`TW-Unlocked v${VERSION} | Loading..`);
+
+  window.TWunlocked = {
+    VERSION
+  };
   TWunlocked.isDesktop = _isDesktop;
   TWunlocked.utils = {};
 
@@ -410,6 +423,7 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
     return Promise.resolve(fetch(site+'/').then(text=>text.text()).then(text=>{
         let dom = new DOMParser().parseFromString(text, 'text/html');
         dom.querySelectorAll('div.extension').forEach(ext => {
+            try { if(ext.style.display == 'none' || ext.hasAttribute('hidden')) return; } catch {};
             const uri = (ext.querySelector('a.copy')||ext.querySelector('a.open')).href.split('/');
             let extension = {
               name: ext.querySelector('h3').innerHTML,
@@ -471,6 +485,7 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
   const preAppend = 'twUoM_';
   TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optionsElm.close()">Close.</button><br>
 <div>
+  <h4>TW-Unlocked | v${VERSION}</h4>
   <hr>
   <label><button onclick="TWunlocked.utils.extMan()">Load extension</button> : 
     <input type="url" id="${preAppend}le"/>&emsp;<label>Unsandboxed: <input type="checkbox" id="${preAppend}leC" checked/>
@@ -718,5 +733,7 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
     localStorage.setItem('twu:extensions', '[]');
   }
   TWunlocked.utils.galleryUtil.updateExtensions();
+
+  console.log(`TW-Unlocked v${VERSION} | Loaded!`);
 });
 ImportTWunlock(true, window.vm);
