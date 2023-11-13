@@ -21,12 +21,14 @@
 */
 
 /*! todo:
- *       1. Make it so a user can add a custom turbowarp site.
- *       2. Desktop bug fixes
+ *       1. Add a UI to allow custom "turbowarp editors"
+ *       2. Make it so that the images / sounds have a custom tag and only show on it or the all tag
+ *          (some code for later to get the selected tag: document.querySelector('div[class^="library_tag-wrapper"] span[class*="tag-button_active"]').querySelector('span').innerHTML )
+ *       3. Support custom sounds
 */
 var ImportTWunlock = (async function (deload, vm) {
 
-  const VERSION = 4;
+  const VERSION = 4.3;
 
   //Disable userscript.
   var tmp = null;
@@ -85,8 +87,25 @@ var ImportTWunlock = (async function (deload, vm) {
   }
 
   //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
+  let customDomains = localStorage.getItem('twu:customDomains');
+  if (customDomains) {
+    customDomains = JSON.parse(customDomains);
+  } else {
+    customDomains = [];
+    localStorage.setItem('twu:customDomains', '[]');
+  }
   let _isDesktop = document.location.href.includes('TurboWarp/resources/app.asar');
-  if (!['turbowarp.org', 'staging.turbowarp.org', 'twplus.pages.dev'].includes(document.location.hostname) && !_isDesktop) {
+  /*!
+   * Reasons:
+   *   GandiIDE:   Dangerous data collection.
+   *   Scratch:    This just wont work.
+   *   PenguinMod: I am not risking it, as this already does not work on penguinmod on some aspects.
+  */
+  if (['getgandi.com', 'cocrea.world', 'scratch.mit.edu', 'studio.penguinmod.site', 'penguinmod.site', 'penguinmod.com', 'studio.penguinmod.com'].includes(document.location.hostname)) {
+    console.error(`TW-Unlocked v${VERSION} | Blocked page.`);
+    return;
+  }
+  if (![...customDomains, 'turbowarp.org', 'staging.turbowarp.org', 'twplus.pages.dev'].includes(document.location.hostname) && !_isDesktop) {
     console.error(`TW-Unlocked v${VERSION} | Not a valid page.`);
     return;
   }
@@ -100,6 +119,7 @@ var ImportTWunlock = (async function (deload, vm) {
   TWunlocked.utils = {};
 
   //Utilities
+  TWunlocked.utils.idGen = function* idGenerator() { let index = 0; while(true){ index+=1; yield index } };
   TWunlocked.utils.setCookie = function (cname, cvalue, exdays) {
     const d = new Date();
     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
@@ -255,7 +275,7 @@ var ImportTWunlock = (async function (deload, vm) {
   if (!TWunlocked.isDesktop) {
     const styling = document.createElement('style');
     styling.innerHTML = `
-dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
+.TWunlockedModal button {
   background-color: rgba(107, 107, 107, 1);
 }`;
     document.head.appendChild(styling);
@@ -481,8 +501,303 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
     }
   }
 
+  TWunlocked.utils.curIdGen = TWunlocked.utils.idGen();
+  TWunlocked.utils.hiddenBubbles = [];
+  TWunlocked.utils.hiddenIcons = [];
+  window.getBub = function(ext) {
+    let bub = document.querySelector('div.scratchCategoryId-'+ext).parentElement;
+    bub.icon = (bub.querySelector('div.scratchCategoryItemBubble') || bub.querySelector('div.scratchCategoryItemIcon'));
+    return bub;
+  }
+  let bound = vm.runtime.getBlocksXML.bind(vm.runtime);
+  vm.runtime.getBlocksXML = function(...args) {
+  setTimeout(function(){
+          for (let i = 0; i < TWunlocked.utils.hiddenBubbles.length; i++) {
+              try { 
+                  let bub = getBub(TWunlocked.utils.hiddenBubbles[i]);
+                  bub.style.display = 'none';
+              } catch(err) {
+                  console.debug('Error when hiding bubble: '+err);
+              }
+          };
+          for (let i = 0; i < TWunlocked.utils.hiddenIcons.length; i++) {
+              try { 
+                  let bub = getBub(TWunlocked.utils.hiddenIcons[i]);
+                  bub.icon.style.display = 'none';
+              } catch(err) {
+                  console.debug('Error when hiding bubble icon: '+err);
+              }
+          }
+      }, 1000);
+      return bound(...args);
+  }
+  document.querySelector('div.blocklyToolboxDiv').oncontextmenu = function(e) {
+      let tmp, bubble = document.elementFromPoint(e.clientX, e.clientY);
+      tmp = bubble.parentElement;
+      if (tmp.classList.contains('scratchCategoryMenuItem')) bubble = tmp;
+      tmp = bubble.querySelector('div.scratchCategoryMenuItem');
+      if (tmp) bubble = tmp;
+      let extension = bubble.classList[1].replace('scratchCategoryId-', '');
+      const isBuiltIn = ['motion', 'looks', 'sound', 'pen', 'data', 'variables', 'dataLists', 'lists', 'event', 'events', 'control', 'sensing', 'operators', 'more', 'myBlocks'].includes(extension);
+      var blocks = vm.runtime.getEditingTarget().blocks;
+      var deletions = [];
+      bubble.icon = (bubble.parentElement.querySelector('div.scratchCategoryItemBubble')||bubble.parentElement.querySelector('div.scratchCategoryItemIcon'));
+      Object.values(blocks._blocks).forEach(block => {
+          if (block.opcode.startsWith(extension)) {
+              let myUp = block.parent;
+              let myNext = block.next;
+              block.parent = null;
+              block.next = null;
+              try { blocks._blocks[myUp].next = myNext; } catch {};
+              try { blocks._blocks[myNext].parent = myUp; } catch {};
+              deletions.push(block.id);
+          }
+      });
+      let widgit = document.createElement('div');
+      widgit.classList.add('blocklyWidgetDiv');
+      widgit.style.position = 'absolute';
+      widgit.style.display = 'block';
+      widgit.style.direction = 'ltr';
+      widgit.style.top = e.clientY+'px';
+      widgit.style.left = e.clientX+'px';
+      widgit.style.width = '224.2px'
+      let menuHeight = 0;
+      let menu = document.createElement('div');
+      menu.classList.add('goog-menu');
+      menu.classList.add('goog-menu-vertical');
+      menu.classList.add('blocklyContextMenu');
+      menu.role = 'menu';
+      menu.style.userSelect = 'none';
+      menu.tabindex = 0;
+      function menuItem(text, extras, onclick) {
+          let item = document.createElement('div');
+          item.isDisabled = extras.isDisabled;
+          if (extras.border) {
+              menuHeight += 3;
+              item.classList.add('sa-blockly-menu-item-border');
+              item.style.paddingTop = '2px';
+              item.style.borderTop = '1px solid rgba(0, 0, 0, 0.15)';
+          }
+          item.onclick = function(...args) {
+              if (item.isDisabled) return;
+              onclick(...args);
+              widgit.remove();
+          }
+          item.onmouseover = function() {
+              if (item.isDisabled) return;
+              item.classList.add('goog-menuitem-highlight');
+          }
+          item.onmouseout = function() {
+              if (item.isDisabled) return;
+              if (!item.isDisabled) item.classList.remove('goog-menuitem-highlight');
+          }
+          item.innerHTML = `<div class="goog-menuitem-content" style="user-select: none;">${text}</div>`;
+          item.classList.add('goog-menuitem');
+          if (item.isDisabled) {
+              item.classList.add('goog-menuitem-disabled');
+          }
+          item.role = 'menuitem';
+          item.id = `:${TWunlocked.utils.curIdGen.next().value}`;
+          item.style.userSelect = 'none';
+          menuHeight += 23;
+          return item;
+      }
+      const defaultSettings = {
+                          isDisabled: false,
+                          border: false
+                      };
+      menu.appendChild(menuItem('remove all extension blocks',
+                      {
+                          isDisabled: isBuiltIn,
+                          border: false
+                      },
+                      function(){
+                          if (confirm('Are you sure about this, this will remove '+deletions.length+' blocks?')) {
+                              deletions.forEach(block => {
+                                    delete blocks._blocks[block];
+                              });
+                              vm.refreshWorkspace();
+                          }
+                      }
+      ));
+      menu.appendChild(menuItem('hide bubble',
+                      {
+                          isDisabled: false,
+                          border: true
+                      },
+                      function(){
+                          if (confirm('Are you sure about this you wont be able to show it unless you reload?')) {
+                              TWunlocked.utils.hiddenBubbles.push(extension);
+                              bubble.parentElement.style.display = 'none';
+                          }
+                      }
+      ));
+      if (TWunlocked.utils.hiddenIcons.includes(extension)) {
+          menu.appendChild(menuItem('show icon', defaultSettings,
+                          function(){
+                              TWunlocked.utils.hiddenIcons.pop(TWunlocked.utils.hiddenBubbles.indexOf(extension));
+                              bubble.icon.style.display = '';
+                          }
+          ));
+      } else {
+          menu.appendChild(menuItem('hide icon', defaultSettings,
+                          function(){
+                              TWunlocked.utils.hiddenIcons.push(extension);
+                              bubble.icon.style.display = 'none';
+                          }
+          ));
+      }
+      widgit.style.height = menuHeight+'px';
+      widgit.appendChild(menu);
+      tmp = function() {
+          try { widgit.remove();
+          document.body.removeEventListener(tmp); } catch {};
+      }
+      document.querySelector('div.blocklyToolboxDiv').onmousedown = tmp;
+      document.body.appendChild(widgit);
+  };
+
+  function importImage(url, costume_name) {
+    const storage = vm.runtime.storage;
+    function get_url_extension(uri) {
+      var len = uri.split("/");
+      return len[len.length - 1].split(".")[1].split(/[#?]/gi)[0];
+    }
+    let dataType = "",
+      dataFormat = "";
+    if (url.startsWith("data:image/")) {
+      url = url.replace("data:image/", "");
+      if (url.startsWith("svg"))
+        (dataType = "svg"), (dataFormat = storage.DataFormat.SVG);
+      if (url.startsWith("png"))
+        (dataType = "png"), (dataFormat = storage.DataFormat.PNG);
+      if (url.startsWith("jpg"))
+        (dataType = "jpg"), (dataFormat = storage.DataFormat.JPG);
+      if (url.startsWith("jpeg"))
+        (dataType = "jpg"), (dataFormat = storage.DataFormat.JPG);
+      if (dataType == "") return -1;
+      url = `data:image/${url}`;
+    } else {
+      dataType = get_url_extension(url);
+      dataType = dataType.toLowerCase();
+      switch (dataType) {
+        case "svg":
+          dataFormat = storage.DataFormat.SVG;
+          break;
+        case "png":
+          dataFormat = storage.DataFormat.PNG;
+          break;
+        default:
+          // *cough* to many jpg formats
+          if (["jpg", "jpeg", "jfif" /* etc, etc.. */].includes(dataType)) {
+            dataFormat = storage.DataFormat.JPG;
+            break;
+          }
+          return -2;
+      }
+    }
+    dataType = dataType.toLowerCase();
+    window.fetch(url)
+      .then((r) => r.arrayBuffer())
+      .then((arrayBuffer) => {
+        const storage = vm.runtime.storage;
+        //  @ts-expect-error
+        vm.addCostume(costume_name + `.${dataType.toUpperCase()}`, {
+          name: costume_name + "",
+          asset: new storage.Asset(
+            dataType == "svg"
+              ? storage.AssetType.ImageVector
+              : storage.AssetType.ImageBitmap,
+            null,
+            // @ts-expect-error YES IT IS SHUT TS lol
+            dataFormat,
+            new Uint8Array(arrayBuffer),
+            true
+          ),
+        });
+      });
+    return 1;
+}
+function createImage(name, url, onclick) {
+  var libItem = document.querySelector('div[class^="library-item_library-item"]');
+  var wrapper = document.createElement('div');
+  libItem.classList.forEach(class_ => { wrapper.classList.add(class_) });
+  wrapper.role = 'button';
+  wrapper.tabIndex = '0';
+  var imageWrapperOuter = document.createElement('div');
+  var imageWrapperInner = document.createElement('div');
+  libItem.childNodes[0].classList.forEach(class_ => { imageWrapperOuter.classList.add(class_) });
+  libItem.childNodes[0].childNodes[0].classList.forEach(class_ => { imageWrapperInner.classList.add(class_) });
+  var image = document.createElement('img');
+  image.classList.add(document.querySelector('img[class^="library-item_library-item-image"]').classList[0]);
+  image.draggable = false;
+  image.loading = 'lazy';
+  image.src = url;
+  imageWrapperInner.appendChild(image);
+  imageWrapperOuter.appendChild(imageWrapperInner);
+  wrapper.appendChild(imageWrapperOuter);
+  var title = document.createElement('span');
+  title.classList.add(document.querySelector('span[class^="library-item_library-item-name"]').classList[0]);
+  title.innerHTML = name;
+  wrapper.appendChild(title);
+  wrapper.onclick = function(e){onclick(e,this)};
+  return wrapper;
+}
+function loadCustomCostumes(namespace) {
+  setTimeout(function() {
+      let library = document.querySelector('div[class^="library_library-scroll-grid"]');
+      function add(elem) {
+          library.childNodes[0].before(elem, library.childNodes[0]);
+      }
+      function loadImageFn(e,self) {
+          console.log(self);
+          importImage(self.querySelector('img').src, self.querySelector('span').innerHTML);
+          document.querySelector('div[class^="modal_header-item"] span[class^="button_outlined-button"]').click();
+      }
+      //you dont need to do this if you are stealing from me, which please dont do :sob:
+      let found = JSON.parse(localStorage.getItem((namespace ?? 'twu:customImages')));
+      if (found.length == 0) return;
+      for (let i = 0; i < found.length; i++) {
+        let cos = found[i];
+        add(createImage(cos.name, cos.url, loadImageFn));
+      }
+  }, 2000);
+}
+function loadCustomBackdrops() {
+  loadCustomCostumes('twu:customBackdrops');
+}
+const observerConfig = {
+attributes: true,
+childList: true,
+characterData: true
+};
+const observer = new MutationObserver((mutations) => {
+mutations.forEach((mutation) => {
+  if (mutation.type == 'attributes') return;
+  if (mutation.addedNodes.length > 0) {
+      if (mutation.addedNodes[0].classList.contains('ReactModalPortal')) {
+          let modalTitle = document.querySelector('[class^="modal_header-item"]').innerHTML;
+          console.log(modalTitle);
+          switch(modalTitle) {
+              case 'Choose a Sprite':
+                  loadCustomCostumes();
+                  break;
+              case 'Choose a Backdrop':
+                  loadCustomBackdrops();
+                  break;
+              case 'Choose a Costume':
+                  loadCustomCostumes();
+                  break;
+          }
+      }
+  }
+});
+});
+observer.observe(document.body, observerConfig);
+
   //Setup options menu.
   const preAppend = 'twUoM_';
+  TWunlocked.utils.optionsElm.classList.add('TWunlockedModal');
   TWunlocked.utils.optionsElm.innerHTML = `<button onclick="TWunlocked.utils.optionsElm.close()">Close.</button><br>
 <div>
   <h4>TW-Unlocked | v${VERSION}</h4>
@@ -492,6 +807,8 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
   </label><br><button style="display:none;" id="${preAppend}" onclick="TWunlocked.utils.addForIextension();this.nextElementSibling.remove();this.remove();" title="#Bring Back For I">Bring back the For I block</button><br><hr>
   <button id="${preAppend}sMs">Disable</button> vm security manager<hr>
   <button onclick="TWunlocked.utils.galleryUtil.showModal();TWunlocked.utils.galleryUtil.updateExtensions();TWunlocked.utils.optionsElm.close()">Manage custom featured extensions</button><br>
+  <button onclick="TWunlocked.cosManager.show();">Manage custom costumes</button><br>
+  <button onclick="TWunlocked.dropManager.show();">Manage custom backdrops</button><br>
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
   <button onclick="vm.refreshWorkspace()">Refresh Workspace</button>
   <hr>
@@ -500,8 +817,186 @@ dialog#TWunlocked-ModalDiv button, dialog#TWunlocked-GalleryModal button {
 </div>`;
   TWunlocked.utils.optionsElm.id = 'TWunlocked-ModalDiv';
   document.body.appendChild(TWunlocked.utils.optionsElm);
+  // *cough* ima copy paste for backdrops, and sounds *cough*
+    //Backdrop library adder modal
+    TWunlocked.dropManager = {
+      menuOpen: false,
+      lsId: 'twu:customBackdrops',
+      elem: document.createElement('dialog'),
+      pop() {
+          this.elem.remove();
+      },
+      close() {
+          this.elem.close();
+          TWunlocked.utils.optionsElm.showModal();
+      },
+      show() {
+          TWunlocked.utils.optionsElm.close();
+          this.elem.showModal();
+      },
+      refreshMenu() {
+          const menuBtn = document.querySelector(`button#${preAppend}dropMenuBtn`);
+          if (TWunlocked.dropManager.elem.open && this.menuOpen) {
+              menuBtn.click();
+              setTimeout(()=>{
+                  menuBtn.click();
+              }, 100);
+          }
+      },
+      add() {
+          let iName = document.querySelector(`input#${preAppend}dropiName`);
+          let iUrl = document.querySelector(`input#${preAppend}dropiUrl`);
+          var tmp = iName.value;
+          iName.value = '';
+          iName = tmp;
+          tmp = iUrl.value;
+          iUrl.value = '';
+          iUrl = tmp;
+          let found = JSON.parse(localStorage.getItem(this.lsId));
+          found.push({name: iName, url: iUrl});
+          localStorage.setItem(this.lsId, JSON.stringify(found));
+          this.refreshMenu();
+      },
+      getUl() {
+          let items = document.createElement('ul');
+          if (!localStorage.hasOwnProperty(this.lsId)) localStorage.setItem(this.lsId, JSON.stringify([]));
+          let found = JSON.parse(localStorage.getItem(this.lsId));
+          const noItems = document.createElement('span');
+          noItems.innerHTML = '&nbsp;&nbsp;No backdrops found, try adding some!';
+          if (found.length == 0) return noItems;
+          for (let i = 0; i < found.length; i++) {
+              let drop = found[i];
+              var tmp2 = document.createElement('li');
+              tmp2.innerHTML = `${drop.name}&nbsp;&nbsp;<button onclick="TWunlocked.dropManager.popItem(${i})">Remove</button>`;
+              items.appendChild(tmp2);
+          }
+          return items;
+      },
+      popItem(num) {
+          let found = JSON.parse(localStorage.getItem(this.lsId));
+          found.pop(num);
+          localStorage.setItem(this.lsId, JSON.stringify(found));
+          this.refreshMenu();
+      },
+      updateMenu() {
+          let menuButton = document.querySelector(`button#${preAppend}dropMenuBtn`);
+          let menu = document.querySelector(`div#${preAppend}dropMenu`);
+          if (menu.style.display == 'none') {
+              this.menuOpen = true;
+              menuButton.innerHTML = 'Hide menu';
+              menu.style.display = '';
+              while (menu.hasChildNodes()) {
+                  menu.firstChild.remove();
+              }
+              menu.appendChild(this.getUl());
+          } else {
+              this.menuOpen = false
+              menuButton.innerHTML = 'Show menu';
+              menu.style.display = 'none';
+          }
+      }
+  };
+  TWunlocked.dropManager.elem.id = 'TWunlocked-dropManager';
+  TWunlocked.dropManager.elem.innerHTML = `<button onclick="TWunlocked.dropManager.close()">Back</button><hr>
+  <h3>Add a custom backdrop image:</h3>
+  <label>Image name: <input id="${preAppend}dropiName"/><br></label>
+  <label>Image url: <input id="${preAppend}dropiUrl"/><br></label>
+  <button onclick="TWunlocked.dropManager.add()">Add</button><hr>
+  <span>Custom images: <div id="${preAppend}dropMenu" style="display:none;"></div>
+  <button id="${preAppend}dropMenuBtn" onclick="TWunlocked.dropManager.updateMenu()">Show menu</button><br></span>`;
+  TWunlocked.dropManager.elem.classList.add('TWunlockedModal');
+  document.body.appendChild(TWunlocked.dropManager.elem);
+  //Costume library adder modal
+  TWunlocked.cosManager = {
+    menuOpen: false,
+    elem: document.createElement('dialog'),
+    lsId: 'twu:customImages',
+    pop() {
+        this.elem.remove();
+    },
+    close() {
+        this.elem.close();
+        TWunlocked.utils.optionsElm.showModal();
+    },
+    show() {
+        TWunlocked.utils.optionsElm.close();
+        this.elem.showModal();
+    },
+    refreshMenu() {
+        const menuBtn = document.querySelector(`button#${preAppend}cosMenuBtn`);
+        if (TWunlocked.cosManager.elem.open && this.menuOpen) {
+            menuBtn.click();
+            setTimeout(()=>{
+                menuBtn.click();
+            }, 100);
+        }
+    },
+    add() {
+        let iName = document.querySelector(`input#${preAppend}cosiName`);
+        let iUrl = document.querySelector(`input#${preAppend}cosiUrl`);
+        var tmp = iName.value;
+        iName.value = '';
+        iName = tmp;
+        tmp = iUrl.value;
+        iUrl.value = '';
+        iUrl = tmp;
+        let found = JSON.parse(localStorage.getItem(this.lsId));
+        found.push({name: iName, url: iUrl});
+        localStorage.setItem(this.lsId, JSON.stringify(found));
+        this.refreshMenu();
+    },
+    getUl() {
+        let items = document.createElement('ul');
+        if (!localStorage.hasOwnProperty(this.lsId)) localStorage.setItem(this.lsId, JSON.stringify([]));
+        let found = JSON.parse(localStorage.getItem(this.lsId));
+        const noItems = document.createElement('span');
+        noItems.innerHTML = '&nbsp;&nbsp;No costumes found, try adding some!';
+        if (found.length == 0) return noItems;
+        for (let i = 0; i < found.length; i++) {
+            let cos = found[i];
+            var tmp2 = document.createElement('li');
+            tmp2.innerHTML = `${cos.name}&nbsp;&nbsp;<button onclick="TWunlocked.cosManager.popItem(${i})">Remove</button>`;
+            items.appendChild(tmp2);
+        }
+        return items;
+    },
+    popItem(num) {
+        let found = JSON.parse(localStorage.getItem(this.lsId));
+        found.pop(num);
+        localStorage.setItem(this.lsId, JSON.stringify(found));
+        this.refreshMenu();
+    },
+    updateMenu() {
+        let menuButton = document.querySelector(`button#${preAppend}cosMenuBtn`);
+        let menu = document.querySelector(`div#${preAppend}cosMenu`);
+        if (menu.style.display == 'none') {
+            this.menuOpen = true;
+            menuButton.innerHTML = 'Hide menu';
+            menu.style.display = '';
+            while (menu.hasChildNodes()) {
+                menu.firstChild.remove();
+            }
+            menu.appendChild(this.getUl());
+        } else {
+            this.menuOpen = false
+            menuButton.innerHTML = 'Show menu';
+            menu.style.display = 'none';
+        }
+    }
+};
+  TWunlocked.cosManager.elem.id = 'TWunlocked-cosManager';
+  TWunlocked.cosManager.elem.innerHTML = `<button onclick="TWunlocked.cosManager.close()">Back</button><hr>
+<h3>Add a custom sprite / costume image:</h3>
+<label>Image name: <input id="${preAppend}cosiName"/><br></label>
+<label>Image url: <input id="${preAppend}cosiUrl"/><br></label>
+<button onclick="TWunlocked.cosManager.add()">Add</button><hr>
+<span>Custom images: <div id="${preAppend}cosMenu" style="display:none;"></div>
+<button id="${preAppend}cosMenuBtn" onclick="TWunlocked.cosManager.updateMenu()">Show menu</button><br></span>`;
+  TWunlocked.cosManager.elem.classList.add('TWunlockedModal');
+  document.body.appendChild(TWunlocked.cosManager.elem);
   //Extension gallery adder modal
   TWunlocked.utils.galleryModal = document.createElement('dialog');
+  TWunlocked.utils.galleryModal.classList.add('TWunlockedModal');
   TWunlocked.utils.galleryModal.id = 'TWunlocked-GalleryModal';
   TWunlocked.utils.galleryUtil = {
     extensions: []
