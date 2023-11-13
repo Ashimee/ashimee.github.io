@@ -21,14 +21,14 @@
 */
 
 /*! todo:
- *       1. Add a UI to allow custom "turbowarp editors"
- *       2. Make it so that the images / sounds have a custom tag and only show on it or the all tag
+ *       1. Make it so that the images / sounds have a custom tag and only show on it or the all tag
  *          (some code for later to get the selected tag: document.querySelector('div[class^="library_tag-wrapper"] span[class*="tag-button_active"]').querySelector('span').innerHTML )
- *       3. Support custom sounds
+ *       2. Support custom sounds
+ *       (maybe I dont wanan annoy the user) Add a UI to allow custom "turbowarp editors" (this is a maybe, I dont wanna annoy the user).
 */
 var ImportTWunlock = (async function (deload, vm) {
 
-  const VERSION = 4.3;
+  const VERSION = 4.5;
 
   //Disable userscript.
   var tmp = null;
@@ -86,6 +86,20 @@ var ImportTWunlock = (async function (deload, vm) {
     return;
   }
 
+  //do something with this
+  function assumeTurbowarp() {
+    var assumption = 0;
+    try {
+        ReduxStore.getState().scratchGui;
+        assumption += 0.5;
+    } catch {}
+    try {
+        vm.greenFlag.toString();
+        assumption += 0.5;
+    } catch {}
+    return (assumption==1);
+  }
+
   //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
   let customDomains = localStorage.getItem('twu:customDomains');
   if (customDomains) {
@@ -106,14 +120,33 @@ var ImportTWunlock = (async function (deload, vm) {
     return;
   }
   if (![...customDomains, 'turbowarp.org', 'staging.turbowarp.org', 'twplus.pages.dev'].includes(document.location.hostname) && !_isDesktop) {
-    console.error(`TW-Unlocked v${VERSION} | Not a valid page.`);
+    console.error(`TW-Unlocked v${VERSION} | Not a valid page.\nIf this is a "turbowarp editor" then run TWunlocked.allowCurrentHostname()`);
+    window.TWunlocked = {
+      allowCurrentHostname() {
+        customDomains = JSON.parse(customDomains);
+        customDomains.push(document.location.hostname);
+        customDomains = JSON.stringify(customDomains);
+        localStorage.setItem('twu:customDomains', customDomains);
+        console.log('Please refresh the page for this to take effect.');
+      }, VERSION
+    }
     return;
   }
 
   console.log(`TW-Unlocked v${VERSION} | Loading..`);
 
   window.TWunlocked = {
-    VERSION
+    removeCurrentHostnameFromAllowed() {
+      let host = document.location.hostname;
+      if (!customDomains.includes(host)) {
+        console.log('This page is not a "custom turbowarp editor".');
+      } 
+      customDomains = JSON.parse(customDomains);
+      customDomains.pop(customDomains.indexOf(host));
+      customDomains = JSON.stringify(customDomains);
+      localStorage.setItem('twu:customDomains', customDomains);
+      console.log('Please refresh the page for this to take effect.');
+    }, VERSION
   };
   TWunlocked.isDesktop = _isDesktop;
   TWunlocked.utils = {};
@@ -1229,6 +1262,6 @@ observer.observe(document.body, observerConfig);
   }
   TWunlocked.utils.galleryUtil.updateExtensions();
 
-  console.log(`TW-Unlocked v${VERSION} | Loaded!`);
+  console.log(`TW-Unlocked v${VERSION} | Loaded!\nIf this is a custom "editor" and you want it removed run TWunlocked.removeCurrentHostnameFromAllowed()`);
 });
 ImportTWunlock(true, window.vm);
