@@ -27,7 +27,7 @@
  *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 4.7;
+  const VERSION = 4.8;
 
   //Disable userscript.
   var tmp = null;
@@ -725,7 +725,7 @@ var ImportTWunlock = async function (deload, vm) {
     }, 1000);
     return bound(...args);
   };
-  document.querySelector("div.blocklyToolboxDiv").oncontextmenu = function (e) {
+  function toolboxMenu(e) {
     let tmp,
       bubble = document.elementFromPoint(e.clientX, e.clientY);
     tmp = bubble.parentElement;
@@ -1482,6 +1482,9 @@ var ImportTWunlock = async function (deload, vm) {
   TWunlocked.utils.updateTick = function () {
     if (document.querySelector('button[class^="gui_extension-button"]'))
       TWunlocked.utils.extBtnAddListen();
+    let toolbox = document.querySelector("div.blocklyToolboxDiv");
+    if (toolbox && toolbox.oncontextmenu == null)
+      toolbox.oncontextmenu = toolboxMenu;
   };
   TWunlocked.utils.updateIvl = setInterval(TWunlocked.utils.updateTick, 50);
 
