@@ -27,7 +27,7 @@
  *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5;
+  const VERSION = 5.1;
 
   //Disable userscript.
   var tmp = null;
@@ -628,6 +628,29 @@ var ImportTWunlock = async function (deload, vm) {
     );
   };
 
+  TWunlocked.utils.attemptToLoadSPGallery = async function () {
+      var keys = await fetch('https://corsproxy.io/?https://sharkpools-extensions.vercel.app/Gallery%20Files/Extension-Keys.json');
+      keys = await keys.json();
+      keys = keys.extensions;
+      delete keys['Image-Effects'];   // Broken icon :(
+      delete keys['Niche-Toolbox'];   // Nah.
+      delete keys['Newgrounds-Audio'] // Legal grey area
+      let extensions = Object.keys(keys);
+      extensions.pop(extensions.length-1);
+      for (let i = 0; i < extensions.length; i++) {
+          let extension = extensions[i];
+          let obj = keys[extension];
+          obj.image = 'https://corsproxy.io/?https://sharkpools-extensions.vercel.app/extension-thumbs/'+extension+'.svg';
+          TWunlocked.utils.addExtensionToFeaturedGallery(
+            obj.image,
+            obj.url,
+            extension,
+            obj.credits
+          );
+      }
+      return Promise.resolve(true);
+  }
+
   TWunlocked.addExtensionToFeaturedGallery = function (
     iconUrl,
     url,
@@ -647,7 +670,7 @@ var ImportTWunlock = async function (deload, vm) {
       function () {
         setTimeout(async function () {
           const modalSettings = TWunlocked.extManager.getMarks();
-          let myGallery = modalSettings.myGallery, spGallery = false;
+          let myGallery = modalSettings.myGallery, spGallery = modalSettings.spGallery;
           TWunlocked.utils.extensionsCategorySeparator =
             document.createElement("hr");
           if (!TWunlocked.isDesktop)
@@ -662,7 +685,20 @@ var ImportTWunlock = async function (deload, vm) {
             myGallery ||
             spGallery
           ) {
+            if (spGallery) {
+              if (!TWunlocked.isDesktop)
+              TWunlocked.utils.extensionLibrary.insertBefore(
+                TWunlocked.utils.extensionsCategorySeparator.cloneNode(true),
+                TWunlocked.utils.extensionLibrary.childNodes[0]
+              );
+              await TWunlocked.utils.attemptToLoadSPGallery();
+            }
             if (myGallery) {
+              if (!TWunlocked.isDesktop)
+              TWunlocked.utils.extensionLibrary.insertBefore(
+                TWunlocked.utils.extensionsCategorySeparator.cloneNode(true),
+                TWunlocked.utils.extensionLibrary.childNodes[0]
+              );
               await TWunlocked.utils.attemptToLoadMyGallery();
             }
             if (!TWunlocked.isDesktop)
@@ -1368,7 +1404,7 @@ var ImportTWunlock = async function (deload, vm) {
     updateCheckmarks() {
       let found = this.getMarks();
       found.myGallery = document.querySelector(`input#${preAppend}extgLoadMine`).checked;
-      found.spGallery = false;
+      found.spGallery = document.querySelector(`input#${preAppend}extgLoadSP`).checked;
       localStorage.setItem(this.lsSId, JSON.stringify(found));
     },
     getCheck(check) {
@@ -1386,7 +1422,8 @@ var ImportTWunlock = async function (deload, vm) {
 <button onclick="TWunlocked.extManager.add()">Add</button><hr>
 <span>Custom extensions: <div id="${preAppend}extMenu" style="display:none;"></div>
 <button id="${preAppend}extMenuBtn" onclick="TWunlocked.extManager.updateMenu()">Show menu</button><br></span>
-<label>auto load from <a href="https://surv.is-a.dev/unsafe-extensions/">unsafe-gallery</a>: <input id="${preAppend}extgLoadMine" type="checkbox"${(TWunlocked.extManager.getCheck('myGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>`;
+<label>auto load from <a href="https://surv.is-a.dev/unsafe-extensions/">unsafe-gallery</a>: <input id="${preAppend}extgLoadMine" type="checkbox"${(TWunlocked.extManager.getCheck('myGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>
+<label>auto load from <a href="https://surv.is-a.dev/unsafe-extensions/">sharkpools gallery</a>: <input id="${preAppend}extgLoadSP" type="checkbox"${(TWunlocked.extManager.getCheck('spGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>`;
   TWunlocked.extManager.elem.classList.add("TWunlockedModal");
   document.body.appendChild(TWunlocked.extManager.elem);
   const loadExtensionInput = document.getElementById(preAppend + "le");
