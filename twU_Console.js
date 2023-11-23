@@ -27,7 +27,7 @@
  *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.1;
+  const VERSION = 5.2;
 
   //Disable userscript.
   var tmp = null;
@@ -632,9 +632,10 @@ var ImportTWunlock = async function (deload, vm) {
       var keys = await fetch('https://corsproxy.io/?https://sharkpools-extensions.vercel.app/Gallery%20Files/Extension-Keys.json');
       keys = await keys.json();
       keys = keys.extensions;
-      delete keys['Image-Effects'];   // Broken icon :(
-      delete keys['Niche-Toolbox'];   // Nah.
-      delete keys['Newgrounds-Audio'] // Legal grey area
+      delete keys['Image-Effects'];    // Broken icon :(
+      delete keys['Niche-Toolbox'];    // Nah.
+      delete keys['Newgrounds-Audio']; // Legal grey area
+      delete keys['Since-2000'];       //Nah.
       let extensions = Object.keys(keys);
       extensions.pop(extensions.length-1);
       for (let i = 0; i < extensions.length; i++) {
