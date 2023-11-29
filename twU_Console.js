@@ -27,7 +27,7 @@
  *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.201;
+  const VERSION = 5.3;
 
   //Disable userscript.
   var tmp = null;
