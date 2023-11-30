@@ -582,7 +582,7 @@ var ImportTWunlock = async function (deload, vm) {
 
   TWunlocked.utils.attemptToLoadMyGallery = async function () {
     var extensions = [];
-    var site = "https://surv.is-a.dev/unsafe-extensions";
+    var site = "https://surv.is-a.dev/survs-gallery";
     if (!TWunlocked.isDesktop)
       TWunlocked.utils.extensionLibrary.insertBefore(
         TWunlocked.utils.extensionsCategorySeparator.cloneNode(true),
@@ -607,7 +607,7 @@ var ImportTWunlock = async function (deload, vm) {
               image: ext
                 .querySelector("img.extension-image")
                 .src.replace(document.location.origin, site),
-              url: `https://surv.is-a.dev/unsafe-extensions/${
+              url: `https://surv.is-a.dev/survs-gallery/${
                 uri[uri.length - 2]
               }/${uri[uri.length - 1]}`,
             };
@@ -1240,7 +1240,7 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
   <button onclick="vm.refreshWorkspace()">Refresh Workspace</button>
   <hr>
-  Submit an extension that cannot be on the gallery to: <a href="https://github.com/SurvExe1Pc/unsafe-extensions">HERE, Click me!!</a>
+  Submit an extension that cannot be on the gallery to: <a href="https://github.com/SurvExe1Pc/survs-gallery">HERE, Click me!!</a>
   <hr>
 </div>`;
   TWunlocked.utils.optionsElm.id = "TWunlocked-ModalDiv";
@@ -1544,8 +1544,8 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
 <button onclick="TWunlocked.extManager.add()">Add</button><hr>
 <span>Custom extensions: <div id="${preAppend}extMenu" style="display:none;"></div>
 <button id="${preAppend}extMenuBtn" onclick="TWunlocked.extManager.updateMenu()">Show menu</button><br></span>
-<label>auto load from <a href="https://surv.is-a.dev/unsafe-extensions/">unsafe-gallery</a>: <input id="${preAppend}extgLoadMine" type="checkbox"${(TWunlocked.extManager.getCheck('myGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>
-<label>auto load from <a href="https://surv.is-a.dev/unsafe-extensions/">sharkpools gallery</a>: <input id="${preAppend}extgLoadSP" type="checkbox"${(TWunlocked.extManager.getCheck('spGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>`;
+<label>auto load from <a href="https://surv.is-a.dev/survs-gallery/">unsafe-gallery</a>: <input id="${preAppend}extgLoadMine" type="checkbox"${(TWunlocked.extManager.getCheck('myGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>
+<label>auto load from <a href="https://surv.is-a.dev/survs-gallery/">sharkpools gallery</a>: <input id="${preAppend}extgLoadSP" type="checkbox"${(TWunlocked.extManager.getCheck('spGallery') ? ' checked' : '')} onclick="TWunlocked.extManager.updateCheckmarks()"/><br></label>`;
   TWunlocked.extManager.elem.classList.add("TWunlockedModal");
   document.body.appendChild(TWunlocked.extManager.elem);
   const loadExtensionInput = document.getElementById(preAppend + "le");
