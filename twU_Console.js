@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name TW-Unlocked (Console)
-// @namespace https://github.com/SurvExe1Pc/userscripts
+// @namespace https://github.com/Ashimee/userscripts
 // @description THIS WILL NOT WORK AS YOU ARE USING THE CONSOLE VERSION
 // @version v0.0.0.0.0.0.0.0.0.0.0.0.0.0
 // @icon https://turbowarp.org/favicon.ico
@@ -14,10 +14,10 @@
 /*!
  *  ==IMPORT VIA BOOKMARKLET OR CONSOLE==
  * TW-Unlocked
- * Other-scripts: https://github.com/SurvExe1Pc/userscripts
+ * Other-scripts: https://github.com/Ashimee/userscripts
  * Adds some useful functions to turbowarp that are disabled due to security issues.
  * version below
- * Made By SurvExE1Pc.
+ * Made By Ashimee.
  */
 
 /*! todo:
@@ -1240,7 +1240,7 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
   <button onclick="vm.refreshWorkspace()">Refresh Workspace</button>
   <hr>
-  Submit an extension that cannot be on the gallery to: <a href="https://github.com/SurvExe1Pc/survs-gallery">HERE, Click me!!</a>
+  Submit an extension that cannot be on the gallery to: <a href="https://github.com/Ashimee/survs-gallery">HERE, Click me!!</a>
   <hr>
 </div>`;
   TWunlocked.utils.optionsElm.id = "TWunlocked-ModalDiv";
