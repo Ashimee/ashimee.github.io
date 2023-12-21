@@ -24,10 +24,10 @@
  *       1. Make it so that the images / sounds have a custom tag and only show on it or the all tag
  *          (some code for later to get the selected tag: document.querySelector('div[class^="library_tag-wrapper"] span[class*="tag-button_active"]').querySelector('span').innerHTML )
  *       2. Support custom sounds
- *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback)
+ *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback) (update: hidden because it was broken)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.3;
+  const VERSION = 5.4;
 
   //Disable userscript.
   var tmp = null;
@@ -159,6 +159,8 @@ var ImportTWunlock = async function (deload, vm) {
       assum.style.zIndex = 32767;
       assum.style.left =
         window.innerWidth - assum.getBoundingClientRect().width * 2 + "px";
+      // until we figure out how to fix this, I will be hiding it
+      assum.display = 'none';
     }
     window.TWunlocked = {
       allowCurrentHostname() {
