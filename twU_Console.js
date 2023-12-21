@@ -27,7 +27,7 @@
  *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback) (update: hidden because it was broken)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.4;
+  const VERSION = 5.5;
 
   //Disable userscript.
   var tmp = null;
@@ -1225,6 +1225,77 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
   });
   observer.observe(document.body, observerConfig);
 
+  TWunlocked.utils.reporterImprove = {
+    getCheck() {
+      return Boolean(JSON.parse(localStorage.getItem('twu:reporterImprove')));
+    },
+    updateChecks() {
+      localStorage.setItem('twu:reporterImprove', Boolean(document.querySelector(`input#${preAppend}reporterImprove`).checked));
+    }
+  };
+
+  // original by sharkpool but his code was unsafe and I did not like it
+  if (vm.runtime.visualReport_!==undefined) vm.runtime.visualReport = vm.runtime.visualReport_;
+  vm.runtime.visualReport_ = vm.runtime.visualReport.bind(vm.runtime);
+  vm.runtime.visualReport = function(blockId, value) {
+    const arrow = document.querySelector('div.blocklyDropDownArrow.arrowTop');
+    arrow.style.left = '0px';
+    if (!TWunlocked.utils.reporterImprove.getCheck()) return vm.runtime.visualReport_(blockId, value);
+    if (['https://', 'http://', 'data:'].filter(e=>String(value).startsWith(e)).length>0) {
+      vm.runtime.visualReport_(blockId, '');
+    } else vm.runtime.visualReport_(blockId, value);
+    setTimeout(() => {
+        const box = document.querySelector('div.blocklyDropDownDiv');
+        const valueBox = box.querySelector('div.valueReportBox');
+        const dropdownContent = valueBox.parentElement;
+        dropdownContent.style.height = 'fit-content';
+        const dropdownData = String(value).trim();
+        let appendElement = undefined;
+        if (dropdownData.startsWith('https://') || dropdownData.startsWith('http://')) {
+          appendElement = document.createElement('a');
+          appendElement.href = dropdownData;
+          appendElement.textContent = dropdownData;
+        }
+        // MIME format: type/subtype;parameter=value
+        if (dropdownData.startsWith('data:')) {
+          const dataType = dropdownData.split('/')[0].replace('data:', '');
+          switch(dataType) {
+            case 'image':
+              appendElement = document.createElement('img');
+              appendElement.src = dropdownData;
+              appendElement.alt = appendElement.src;
+              break;
+            case 'audio':
+              appendElement = document.createElement('audio');
+              appendElement.controls = true;
+              appendElement.appendChild(document.createElement('source'));
+              appendElement.childNodes[0].src = dropdownData;
+              break;
+            case 'video':
+              appendElement = document.createElement('video');
+              appendElement.controls = true;
+              appendElement.appendChild(document.createElement('source'));
+              appendElement.childNodes[0].src = dropdownData;
+              break;
+            default:
+              valueBox.textContent = dropdownData;
+              console.warn('Recivied potentionally dangerous input in report box dataURL.');
+              break;
+          }
+        }
+        if (appendElement) {
+          valueBox.innerHTML = '';
+          valueBox.appendChild(appendElement);
+          const boxOffset = (0 - (box.getBoundingClientRect().width / 2) + 30);
+          box.style.transition = 'opacity 0.25s ease 0s';
+          box.style.transform = `translate(${boxOffset}px, 20px)`;
+          box.style.transition = 'transform 0.25s ease 0s, opacity 0.25s ease 0s';
+          const arrowOffset = (0 - boxOffset);
+          arrow.style.left = `${arrowOffset}px`;
+        }
+    }, 25);
+}
+
   //Setup options menu.
   const preAppend = "twUoM_";
   TWunlocked.utils.optionsElm.classList.add("TWunlockedModal");
@@ -1240,7 +1311,8 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
   <button onclick="TWunlocked.cosManager.show();">Manage custom costumes</button><br>
   <button onclick="TWunlocked.dropManager.show();">Manage custom backdrops</button><br>
   <button onclick="vm.runtime.extensionManager.refreshBlocks()">Refresh Blocks</button><br>
-  <button onclick="vm.refreshWorkspace()">Refresh Workspace</button>
+  <button onclick="vm.refreshWorkspace()">Refresh Workspace</button><br>
+  <label>reporter improvements: <input id="${preAppend}reporterImprove" type="checkbox"${(TWunlocked.utils.reporterImprove.getCheck() ? ' checked' : '')} onclick="TWunlocked.utils.reporterImprove.updateChecks()"/><br></label>
   <hr>
   Submit an extension that cannot be on the gallery to: <a href="https://github.com/Ashimee/survs-gallery">HERE, Click me!!</a>
   <hr>
