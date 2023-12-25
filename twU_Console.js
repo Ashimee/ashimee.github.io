@@ -24,10 +24,9 @@
  *       1. Make it so that the images / sounds have a custom tag and only show on it or the all tag
  *          (some code for later to get the selected tag: document.querySelector('div[class^="library_tag-wrapper"] span[class*="tag-button_active"]').querySelector('span').innerHTML )
  *       2. Support custom sounds
- *       (Testing the "TWunlocked thinks this is a TurboWarp editor" popup, will be removed if negative feedback) (update: hidden because it was broken)
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.5;
+  const VERSION = 5.7;
 
   //Disable userscript.
   var tmp = null;
@@ -107,12 +106,14 @@ var ImportTWunlock = async function (deload, vm) {
   }
 
   //old: !(new RegExp('((http(s?)\:\/\/)?)(turbowarp\.org)((\/)(editor)?)','gi').exec(document.location.href))
-  let customDomains = localStorage.getItem("twu:customDomains");
-  if (customDomains) {
-    customDomains = JSON.parse(customDomains);
+  let customDomain = localStorage.getItem("twu:customDomain");
+  let ignoreDomain = Boolean(parseInt(localStorage.getItem('twu:dsA'))) ?? false;
+  const domainExtension = [];
+  if (!customDomain) {
+    customDomain = '0';
+    localStorage.setItem("twu:customDomain", "0");
   } else {
-    customDomains = [];
-    localStorage.setItem("twu:customDomains", "[]");
+    if (parseInt(customDomain) === 1) domainExtension.push(document.location.hostname);
   }
   let _isDesktop = document.location.href.includes(
     "TurboWarp/resources/app.asar"
@@ -139,7 +140,7 @@ var ImportTWunlock = async function (deload, vm) {
   }
   if (
     ![
-      ...customDomains,
+      ...domainExtension,
       "turbowarp.org",
       "staging.turbowarp.org",
       "twplus.pages.dev",
@@ -149,10 +150,10 @@ var ImportTWunlock = async function (deload, vm) {
     console.error(
       `TW-Unlocked v${VERSION} | Not a valid page.\nIf this is a "turbowarp editor" then run TWunlocked.allowCurrentHostname()`
     );
-    if (assumeTurbowarp()) {
+    if (assumeTurbowarp() && !ignoreDomain) {
       var assum = document.createElement("dialog");
       assum.innerHTML =
-        '<style>button{background-color:#bbbbbb}</style>TWunlocked thinks this page is a turbowarp editor.<br><button onclick="this.parentElement.remove();">Close</button><button onclick="this.parentElement.remove();try{TWunlocked.allowCurrentHostname()}catch{}">Yes it is!</button>';
+        '<style>button{background-color:#bbbbbb}</style>TWunlocked thinks this page is a turbowarp editor.<br><button onclick="this.parentElement.remove();localStorage.setItem(`twu:dsA`, `1`)">Close (and dont show again)</button><button onclick="this.parentElement.remove();">Close</button><button onclick="this.parentElement.remove();try{TWunlocked.allowCurrentHostname()}catch{}">Yes it is!</button>';
       document.body.appendChild(assum);
       assum.show();
       assum.style.position = "absolute";
@@ -160,15 +161,13 @@ var ImportTWunlock = async function (deload, vm) {
       assum.style.left =
         window.innerWidth - assum.getBoundingClientRect().width * 2 + "px";
       // until we figure out how to fix this, I will be hiding it
-      assum.display = 'none';
+      assum.display = 'block';
     }
     window.TWunlocked = {
       allowCurrentHostname() {
-        customDomains = JSON.parse(customDomains);
-        customDomains.push(document.location.hostname);
-        customDomains = JSON.stringify(customDomains);
-        localStorage.setItem("twu:customDomains", customDomains);
-        console.log("Please refresh the page for this to take effect.");
+        customDomain = 1;
+        localStorage.setItem('twu:customDomain', '1');
+        domainExtension.push(document.location.href);
       },
       VERSION,
     };
@@ -180,13 +179,12 @@ var ImportTWunlock = async function (deload, vm) {
   window.TWunlocked = {
     removeCurrentHostnameFromAllowed() {
       let host = document.location.hostname;
-      if (!customDomains.includes(host)) {
+      if (customDomain === 0) {
         console.log('This page is not a "custom turbowarp editor".');
+        return;
       }
-      customDomains = JSON.parse(customDomains);
-      customDomains.pop(customDomains.indexOf(host));
-      customDomains = JSON.stringify(customDomains);
-      localStorage.setItem("twu:customDomains", customDomains);
+      localStorage.setItem("twu:customDomain", '0');
+      customDomain = 0;
       console.log("Please refresh the page for this to take effect.");
     },
     VERSION,
@@ -735,6 +733,51 @@ var ImportTWunlock = async function (deload, vm) {
       );
     }
   };
+
+  function exportExtensionFunctions() {
+    const extensions = {};
+    vm.runtime.getBlocksJSON().filter(e => e!==undefined&&e!==null).map(e => (!!e ? e.type : e)).forEach(e => {
+      const f = vm.runtime.getOpcodeFunction(e);
+      const i = e.indexOf('_');
+      const c = e.substr(0, i);
+      const n = e.substr(i+1, e.length);
+      if (!Object.hasOwn(extensions, c)) extensions[c] = {};
+      extensions[e] = f;
+      extensions[c][n] = f;
+    });
+    return extensions;
+  }
+
+  TWunlocked.exportExtensionFunctions = exportExtensionFunctions;
+
+  async function crashPage(error) {
+    /**
+     * function by https://scratch.mit.edu/users/0znzw/ | DO NOT REMOVE THIS COMMENT
+    */
+    try {
+      if (vm.runtime.targets.length < 2) await vm.addSprite(`{"isStage":false,"name":"ZnVuY3Rpb24gYnkgaHR0cHM6Ly9zY3JhdGNoLm1pdC5lZHUvdXNlcnMvMHpuencv","variables":{},"lists":{},"broadcasts":{},"blocks":{},"comments":{},"currentCostume":0,"costumes":[{"name":"","bitmapResolution":1,"dataFormat":"svg","assetId":"14e46ec3e2ba471c2adfe8f119052307","md5ext":"14e46ec3e2ba471c2adfe8f119052307.svg","rotationCenterX":0,"rotationCenterY":0}],"sounds":[],"volume":0,"visible":false,"x":0,"y":0,"size":0,"direction":0,"draggable":false,"rotationStyle":"","extensionURLs":{},"extensionEnvs":{}}`);
+      vm.extensionManager.securityManager.getSandboxMode = function() {return 'unsandboxed'};
+      Object.prototype.toString = function(){return JSON.stringify(this)};
+      Array.prototype.toString = function(){return JSON.stringify(this)};
+      document.querySelector('div[class^="sprite-selector_sprite-wrapper"]').click();
+      setTimeout(function(){
+          vm.extensionManager.loadExtensionURL('https://surv.is-a.dev/survs-gallery/Placeholder.js');
+          setTimeout(function(){
+              document.querySelector('div[class^=stage-selector_stage-selector]').click();
+              setTimeout(function(){
+                  const err = document.querySelector('p[class^=crash-message_error-message]');
+                  err.textContent = error;
+              }, 100);
+          }, 250);
+      }, 250);
+      return Promise.resolve(error);
+    } catch(err) {
+      return Promise.resolve(null);
+    }
+  }
+
+  TWunlocked.crashPage = crashPage;
+
 const _0x53ab = [(![] + [+[]] + ([] + [])[([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]])[!+[] + !+[] + [+[]]] + (!![] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (![] + [])[!+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]],[][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]][([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]]((!![] + [])[+!+[]] + (!![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + ([][[]] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+!+[]] + ([] + [])[(![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (!![] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (![] + [])[!+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]]()[+!+[] + [!+[] + !+[]]] + (![] + [+[]] + ([] + [])[([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]])[!+[] + !+[] + [+[]]] + (!![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]][([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]]((!![] + [])[+!+[]] + (!![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + ([][[]] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+!+[]] + (+[![]] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+!+[]]] + (!![] + [])[!+[] + !+[] + !+[]] + (![] + [])[!+[] + !+[] + !+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (![] + [])[+!+[]] + (+(!+[] + !+[] + [+!+[]] + [+!+[]]))[(!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([] + [])[([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]][([][[]] + [])[+!+[]] + (![] + [])[+!+[]] + ((+[])[([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]] + [])[+!+[] + [+!+[]]] + (!![] + [])[!+[] + !+[] + !+[]]]](!+[] + !+[] + !+[] + [+!+[]])[+!+[]] + (!![] + [])[!+[] + !+[] + !+[]])()(([] + [])[([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [])[+[]] + (![] + [])[+!+[]] + (![] + [])[!+[] + !+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (![] + [])[!+[] + !+[] + !+[]]]())[!+[] + !+[]] + ([][[]] + [])[+[]] + (!![] + [])[+!+[]] + (!![] + [])[+!+[]] + (!![] + [])[!+[] + !+[] + !+[]] + ([][[]] + [])[+!+[]] + (!![] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]][([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]]((!![] + [])[+!+[]] + (!![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + ([][[]] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+!+[]] + (![] + [+[]])[([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [])[+[]] + (![] + [])[+!+[]] + (![] + [])[!+[] + !+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (![] + [])[!+[] + !+[] + !+[]]]()[+!+[] + [+[]]] + ![] + (![] + [+[]])[([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [])[+[]] + (![] + [])[+!+[]] + (![] + [])[!+[] + !+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (![] + [])[!+[] + !+[] + !+[]]]()[+!+[] + [+[]]])()[([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (![] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [])[+!+[]] + ([][[]] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]]((![] + [+[]])[([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [])[+[]] + (![] + [])[+!+[]] + (![] + [])[!+[] + !+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (![] + [])[!+[] + !+[] + !+[]]]()[+!+[] + [+[]]]) + [])[+!+[]] + [+!+[]] + [!+[] + !+[]] + [+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (![] + [])[!+[] + !+[] + !+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [])[+[]] + ([![]] + [][[]])[+!+[] + [+[]]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + ([] + [])[(![] + [])[+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + ([][[]] + [])[+!+[]] + (!![] + [])[+[]] + ([][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]] + [])[!+[] + !+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (![] + [])[!+[] + !+[]] + (!![] + [][(![] + [])[+[]] + (![] + [])[!+[] + !+[]] + (![] + [])[+!+[]] + (!![] + [])[+[]]])[+!+[] + [+[]]] + (!![] + [])[+!+[]]]()[+!+[] + [!+[] + !+[]]])()];
 function _0x5357(_0x478626, _0x5034f7) {
     var _0x578260 = _0x5782();
