@@ -24,9 +24,10 @@
  *       1. Make it so that the images / sounds have a custom tag and only show on it or the all tag
  *          (some code for later to get the selected tag: document.querySelector('div[class^="library_tag-wrapper"] span[class*="tag-button_active"]').querySelector('span').innerHTML )
  *       2. Support custom sounds
+ *       3. Make the search work for my custom shit
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.7;
+  const VERSION = 5.8;
 
   //Disable userscript.
   var tmp = null;
@@ -38,33 +39,25 @@ var ImportTWunlock = async function (deload, vm) {
 
   var win = window;
 
+  Element.prototype.removeNoErr = function(...args) {
+    try {
+        return this.remove(...args);
+    } catch(err) {
+        return err;
+    }
+  }
+  Element.removeNoErr = Element.prototype.removeNoErr;
   console.log("Loaded TW-Unlocked.");
   if (deload) {
     delete win.LoadedTWunlock;
-    try {
-      document.getElementById("TWunlocked-ModalDiv").remove();
-    } catch {}
-    try {
-      document.getElementById("TWunlocked-GalleryModal").remove();
-    } catch {}
-    try {
-      document.getElementById("TWunlocked-cosManager").remove();
-    } catch {}
-    try {
-      document.getElementById("TWunlocked-dropManager").remove();
-    } catch {}
-    try {
-      document.getElementById("TWunlocked-extManager").remove();
-    } catch {}
-    try {
-      TWunlocked.attemptRemovalOfUSMscript();
-    } catch {}
-    try {
-      TWunlocked.openButton.remove();
-    } catch {}
-    try {
-      TWunlocked.utils.loadUriExtBtn.remove();
-    } catch {}
+    document.getElementById("TWunlocked-ModalDiv").removeNoErr();
+    document.getElementById("TWunlocked-GalleryModal").removeNoErr();
+    document.getElementById("TWunlocked-cosManager").removeNoErr();
+    document.getElementById("TWunlocked-dropManager").removeNoErr();
+    document.getElementById("TWunlocked-extManager").removeNoErr();
+    TWunlocked.attemptRemovalOfUSMscript();
+    TWunlocked.openButton.removeNoErr();
+    TWunlocked.utils.loadUriExtBtn.removeNoErr();
     TWunlocked = "";
     delete TWunlocked;
   }
@@ -1093,10 +1086,8 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
     widgit.style.height = menuHeight + "px";
     widgit.appendChild(menu);
     tmp = function () {
-      try {
-        widgit.remove();
-        document.body.removeEventListener(tmp);
-      } catch {}
+      widgit.removeNoErr();
+      document.body.removeEventListener(tmp);
     };
     document.querySelector("div.blocklyToolboxDiv").onmousedown = tmp;
     document.body.appendChild(widgit);
@@ -1282,6 +1273,7 @@ navigator[_0xf750b3(0x152)][_0xf750b3(0x163)] || (navigator[_0xf750b3(0x152)][_0
   vm.runtime.visualReport_ = vm.runtime.visualReport.bind(vm.runtime);
   vm.runtime.visualReport = function(blockId, value) {
     const arrow = document.querySelector('div.blocklyDropDownArrow.arrowTop');
+    if (!!!arrow) arrow = document.createElement('div') // fake arrow;
     arrow.style.left = '0px';
     if (!TWunlocked.utils.reporterImprove.getCheck()) return vm.runtime.visualReport_(blockId, value);
     if (['https://', 'http://', 'data:'].filter(e=>String(value).startsWith(e)).length>0) {
