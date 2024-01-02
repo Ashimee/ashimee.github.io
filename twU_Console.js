@@ -27,7 +27,7 @@
  *       3. Make the search work for my custom shit
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.8;
+  const VERSION = 5.9;
 
   //Disable userscript.
   var tmp = null;
@@ -39,14 +39,14 @@ var ImportTWunlock = async function (deload, vm) {
 
   var win = window;
 
-  Element.prototype.removeNoErr = function(...args) {
+  HTMLElement.prototype.removeNoErr = function(...args) {
     try {
         return this.remove(...args);
     } catch(err) {
         return err;
     }
   }
-  Element.removeNoErr = Element.prototype.removeNoErr;
+  HTMLElement.removeNoErr = HTMLElement.prototype.removeNoErr;
   console.log("Loaded TW-Unlocked.");
   if (deload) {
     delete win.LoadedTWunlock;
