@@ -27,7 +27,7 @@
  *       3. Make the search work for my custom shit
  */
 var ImportTWunlock = async function (deload, vm) {
-  const VERSION = 5.9;
+  const VERSION = 6;
 
   //Disable userscript.
   var tmp = null;
@@ -38,26 +38,25 @@ var ImportTWunlock = async function (deload, vm) {
   if (tmp != null) return;
 
   var win = window;
-
-  HTMLElement.prototype.removeNoErr = function(...args) {
+  function removeNoErr(e) {
     try {
-        return this.remove(...args);
-    } catch(err) {
-        return err;
+      e.remove(...args);
+      return true;
+    } catch(j) {
+      return j;
     }
   }
-  HTMLElement.removeNoErr = HTMLElement.prototype.removeNoErr;
   console.log("Loaded TW-Unlocked.");
-  if (deload) {
+  if (deload && window.TWunlocked) {
     delete win.LoadedTWunlock;
-    document.getElementById("TWunlocked-ModalDiv").removeNoErr();
-    document.getElementById("TWunlocked-GalleryModal").removeNoErr();
-    document.getElementById("TWunlocked-cosManager").removeNoErr();
-    document.getElementById("TWunlocked-dropManager").removeNoErr();
-    document.getElementById("TWunlocked-extManager").removeNoErr();
+    removeNoErr(document.getElementById("TWunlocked-ModalDiv"));
+    removeNoErr(document.getElementById("TWunlocked-GalleryModal"));
+    removeNoErr(document.getElementById("TWunlocked-cosManager"));
+    removeNoErr(document.getElementById("TWunlocked-dropManager"));
+    removeNoErr(document.getElementById("TWunlocked-extManager"));
     TWunlocked.attemptRemovalOfUSMscript();
-    TWunlocked.openButton.removeNoErr();
-    TWunlocked.utils.loadUriExtBtn.removeNoErr();
+    removeNoErr(TWunlocked.openButton);
+    removeNoErr(TWunlocked.utils.loadUriExtBtn);
     TWunlocked = "";
     delete TWunlocked;
   }
